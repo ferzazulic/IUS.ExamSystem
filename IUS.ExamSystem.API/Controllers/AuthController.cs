@@ -1,4 +1,9 @@
+using IUS.ExamSystem.Application.DTOs;
+using IUS.ExamSystem.Application.Interfaces;
+using IUS.ExamSystem.Domain.Enums;
 using Microsoft.AspNetCore.Mvc;
+
+namespace IUS.ExamSystem.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]

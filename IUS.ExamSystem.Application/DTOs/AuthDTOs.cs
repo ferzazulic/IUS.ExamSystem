@@ -1,3 +1,7 @@
+using IUS.ExamSystem.Domain.Enums;
+
+namespace IUS.ExamSystem.Application.DTOs;
+
 public class RegisterRequest
 {
     public string FullName { get; set; }

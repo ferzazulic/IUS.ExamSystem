@@ -1,3 +1,7 @@
+using IUS.ExamSystem.Domain.Entities;
+
+namespace IUS.ExamSystem.Application.Interfaces;
+
 public interface IExamService
 {
     Task AllocateSeats(int examId);

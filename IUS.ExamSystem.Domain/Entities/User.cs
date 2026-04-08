@@ -1,3 +1,7 @@
+using IUS.ExamSystem.Domain.Enums;
+
+namespace IUS.ExamSystem.Domain.Entities;
+
 public class User
 {
     public int Id { get; set; }

@@ -1,3 +1,4 @@
+using IUS.ExamSystem.Application.Interfaces;
 using IUS.ExamSystem.Domain.Entities;
 using IUS.ExamSystem.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;

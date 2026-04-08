@@ -1,5 +1,7 @@
 using IUS.ExamSystem.Application.DTOs;
+using IUS.ExamSystem.Application.Interfaces;
 using IUS.ExamSystem.Domain.Entities;
+using IUS.ExamSystem.Domain.Enums;
 using IUS.ExamSystem.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 

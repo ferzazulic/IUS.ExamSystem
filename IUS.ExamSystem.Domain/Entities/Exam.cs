@@ -1,3 +1,5 @@
+namespace IUS.ExamSystem.Domain.Entities;
+
 public class Exam
 {
     public int Id { get; set; }

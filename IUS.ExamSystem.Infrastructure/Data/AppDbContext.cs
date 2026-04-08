@@ -1,3 +1,8 @@
+using IUS.ExamSystem.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
+
+namespace IUS.ExamSystem.Infrastructure.Data;
+
 public class AppDbContext : DbContext
 {
     public DbSet<User> Users { get; set; }

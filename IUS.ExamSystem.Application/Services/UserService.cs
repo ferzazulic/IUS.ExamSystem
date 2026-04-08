@@ -1,6 +1,13 @@
+using IUS.ExamSystem.Application.Interfaces;
+using IUS.ExamSystem.Domain.Entities;
+using IUS.ExamSystem.Domain.Enums;
+using IUS.ExamSystem.Infrastructure.Auth;
+using IUS.ExamSystem.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
 using System.Text;
+
+namespace IUS.ExamSystem.Application.Services;
 
 public class UserService : IUserService
 {

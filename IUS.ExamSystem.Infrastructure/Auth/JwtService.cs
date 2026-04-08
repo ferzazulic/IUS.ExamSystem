@@ -1,3 +1,11 @@
+using IUS.ExamSystem.Domain.Entities;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
+using Microsoft.IdentityModel.Tokens;
+
+namespace IUS.ExamSystem.Infrastructure.Auth;
+
 public class JwtService
 {
     public string GenerateToken(User user)
