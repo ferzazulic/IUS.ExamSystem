@@ -76,6 +76,88 @@ The API runs at `http://localhost:5000` by default.
 - `GET /api/report/students/all` - All student reports
 - `POST /api/report/submit-score` - Submit a score and grade for an assignment
 
+## Example Requests
+
+### Register
+```http
+POST /api/auth/register
+Content-Type: application/json
+
+{
+  "fullName": "Ahmed Hassan",
+  "email": "ahmed@university.edu",
+  "password": "Password123!",
+  "role": 2
+}
+```
+
+### Login
+```http
+POST /api/auth/login
+Content-Type: application/json
+
+{
+  "email": "ahmed@university.edu",
+  "password": "Password123!"
+}
+```
+
+### Create Exam
+```http
+POST /api/exam
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "subject": "Advanced Mathematics",
+  "startTime": "2026-04-15T09:00:00Z",
+  "endTime": "2026-04-15T11:00:00Z",
+  "roomId": 1
+}
+```
+
+### Allocate Seats
+```http
+POST /api/exam/allocate/1
+Authorization: Bearer <token>
+```
+
+### Allocate Selected Students
+```http
+POST /api/exam/allocate-selected/1
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "studentIds": [5, 12, 23]
+}
+```
+
+### Check Conflicts
+```http
+POST /api/exam/check-conflicts
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "studentId": 5,
+  "examId": 1
+}
+```
+
+### Submit Score
+```http
+POST /api/report/submit-score
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "assignmentId": 1,
+  "score": 85.5,
+  "grade": 3.8
+}
+```
+
 ## Swagger
 
 When running locally, browse API docs at:
