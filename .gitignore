@@ -1,0 +1,42 @@
+## Visual Studio
+.vs/
+.vscode/
+*.user
+*.suo
+*.sln.iml
+
+## Build folders
+bin/
+obj/
+dist/
+build/
+
+## NuGet
+*.nupkg
+*.snupkg
+.nuget/
+
+## Entity Framework
+.efcore/
+Migrations/*.Designer.cs
+
+## Runtime
+appsettings.local.json
+appsettings.Development.json
+
+## OS
+.DS_Store
+Thumbs.db
+
+## IDE
+.idea/
+*.swp
+*.swo
+
+## Logs
+logs/
+*.log
+
+## Environment
+.env
+.env.local
