@@ -1,0 +1,106 @@
+import { useState } from "react";
+import logo from "../assets/iuslogo.png";
+import { useNavigate } from "react-router-dom";
+
+export function Register() {
+    const [name, setName] = useState("");
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [confirm, setConfirm] = useState("");
+
+    const navigate = useNavigate();
+
+    const handleRegister = () => {
+        if (!name || !email || !password || !confirm) {
+            alert("Please fill all fields");
+            return;
+        }
+
+        if (password !== confirm) {
+            alert("Passwords do not match");
+            return;
+        }
+
+        const user = {
+            name,
+            email,
+            password
+        };
+
+        // 💾 save user
+        localStorage.setItem("user", JSON.stringify(user));
+
+        alert("Account created successfully ✅");
+
+        // redirect na login
+        navigate("/login");
+    };
+
+    return (
+        <div className="canvas page-transition">
+            <div className="orb orb-1"></div>
+            <div className="orb orb-2"></div>
+
+            <div
+                className="glass-wrapper"
+                style={{
+                    justifyContent: "center",
+                    alignItems: "center",
+                    flexDirection: "column"
+                }}
+            >
+                <img src={logo} alt="IUS logo" className="login-logo-img" />
+
+                <div className="login-card view-fade-in">
+
+                    <h2 className="login-title">Create account</h2>
+                    <p className="login-sub">Join the platform</p>
+
+                    <input
+                        className="login-input"
+                        placeholder=" Full name"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                    />
+
+                    <input
+                        className="login-input"
+                        placeholder=" Email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                    />
+
+                    <input
+                        className="login-input"
+                        type="password"
+                        placeholder=" Password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                    />
+
+                    <input
+                        className="login-input"
+                        type="password"
+                        placeholder=" Confirm password"
+                        value={confirm}
+                        onChange={(e) => setConfirm(e.target.value)}
+                    />
+
+                    <button className="login-btn" onClick={handleRegister}>
+                        Create account
+                    </button>
+
+                    <div className="login-divider"></div>
+
+                    <button
+                        className="register-btn"
+                        onClick={() => navigate("/login")}
+                    >
+                        Already have an account? Log in
+                    </button>
+
+                </div>
+            </div>
+        </div>
+    );
+}
