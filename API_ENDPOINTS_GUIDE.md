@@ -326,7 +326,112 @@ Response:
 
 ---
 
-## 5. ERROR HANDLING
+## 5. ROOM MANAGEMENT
+
+### Get All Rooms
+**Endpoint:** `GET /api/room`  
+**Auth:** Admin, Staff  
+**Description:** List all exam rooms with their details
+
+```
+Response:
+[
+  {
+    "id": 1,
+    "name": "Room 101",
+    "capacity": 50,
+    "seats": [
+      {"id": 1, "number": 1, "roomId": 1},
+      {"id": 2, "number": 2, "roomId": 1},
+      // ... up to capacity
+    ]
+  },
+  // ... more rooms
+]
+```
+
+### Get Room Details
+**Endpoint:** `GET /api/room/{id}`  
+**Auth:** Admin, Staff  
+**Description:** Get detailed information about a specific room
+
+```
+Response:
+{
+  "id": 1,
+  "name": "Room 101",
+  "capacity": 50,
+  "seats": [
+    {"id": 1, "number": 1, "roomId": 1},
+    {"id": 2, "number": 2, "roomId": 1},
+    // ... all seats
+  ]
+}
+```
+
+### Create New Room
+**Endpoint:** `POST /api/room`  
+**Auth:** Admin  
+**Description:** Create a new exam room (automatically creates seats based on capacity)
+
+```json
+Request Body:
+{
+  "name": "Room 102",
+  "capacity": 40
+}
+
+Response:
+{
+  "id": 2,
+  "name": "Room 102",
+  "capacity": 40,
+  "seats": [
+    {"id": 51, "number": 1, "roomId": 2},
+    {"id": 52, "number": 2, "roomId": 2},
+    // ... 40 seats total
+  ]
+}
+```
+
+### Update Room
+**Endpoint:** `PUT /api/room/{id}`  
+**Auth:** Admin  
+**Description:** Update room information (adjusts seats if capacity changes)
+
+```json
+Request Body:
+{
+  "name": "Updated Room 101",
+  "capacity": 60
+}
+
+Response:
+{
+  "id": 1,
+  "name": "Updated Room 101",
+  "capacity": 60,
+  "seats": [
+    // ... 60 seats
+  ]
+}
+```
+
+### Delete Room
+**Endpoint:** `DELETE /api/room/{id}`  
+**Auth:** Admin  
+**Description:** Delete a room (only if no exams are assigned)
+
+```
+Response:
+{
+  "message": "Room deleted successfully"
+}
+```
+
+---
+
+## 6. ERROR HANDLING
 
 All endpoints return appropriate HTTP status codes:
 
@@ -352,7 +457,7 @@ All endpoints return appropriate HTTP status codes:
 
 ---
 
-## 6. AUTHENTICATION
+## 7. AUTHENTICATION
 
 All endpoints (except `/api/auth/login` and `/api/auth/register`) require JWT token:
 
@@ -367,7 +472,7 @@ Authorization: Bearer <your_jwt_token>
 
 ---
 
-## 7. EXAMPLE USE CASES
+## 8. EXAMPLE USE CASES
 
 ### Use Case 1: Creating an Exam and Allocating Seats
 

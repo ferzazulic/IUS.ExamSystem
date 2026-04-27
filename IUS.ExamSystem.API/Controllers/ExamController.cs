@@ -94,12 +94,40 @@ public class ExamController : ControllerBase
         return Ok(exam);
     }
 
+    [HttpGet("{examId}/available-seats")]
+    [Authorize(Roles = "Admin,Staff")]
+    public async Task<IActionResult> GetAvailableSeats(int examId)
+    {
+        try
+        {
+            var availableSeats = await _service.GetAvailableSeats(examId);
+            var exam = await _service.GetExamById(examId); // To get room info
+            return Ok(new
+            {
+                examId,
+                roomName = exam?.Room?.Name,
+                totalCapacity = exam?.Room?.Capacity ?? 0,
+                occupiedSeats = exam?.Assignments?.Count ?? 0,
+                availableSeats = availableSeats.Select(s => new
+                {
+                    seatId = s.Id,
+                    seatNumber = s.Number,
+                    roomId = s.RoomId
+                }).ToList()
+            });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
+
     [HttpGet]
     [Authorize]
     public async Task<IActionResult> GetAllExams()
     {
         var exams = await _service.GetAllExams();
-        return Ok(exams);
+        return Ok(new { exams });
     }
 
     [HttpPost]

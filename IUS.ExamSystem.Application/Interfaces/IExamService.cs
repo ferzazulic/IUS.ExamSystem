@@ -9,4 +9,5 @@ public interface IExamService
     Task<List<Exam>> GetAllExams();
     Task<Exam> GetExamById(int id);
     Task<Exam> CreateExam(Exam exam);
+    Task<List<Seat>> GetAvailableSeats(int examId);
 }

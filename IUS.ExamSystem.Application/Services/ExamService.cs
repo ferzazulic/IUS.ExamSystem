@@ -139,4 +139,25 @@ public class ExamService : IExamService
         await _context.SaveChangesAsync();
         return exam;
     }
+
+    public async Task<List<Seat>> GetAvailableSeats(int examId)
+    {
+        var exam = await _context.Exams
+            .FirstOrDefaultAsync(e => e.Id == examId);
+
+        if (exam == null)
+            throw new ArgumentException($"Exam with ID {examId} not found");
+
+        var assignedSeatIds = await _context.ExamAssignments
+            .Where(ea => ea.ExamId == examId)
+            .Select(ea => ea.SeatId)
+            .ToListAsync();
+
+        var availableSeats = await _context.Seats
+            .Where(s => s.RoomId == exam.RoomId && !assignedSeatIds.Contains(s.Id))
+            .OrderBy(s => s.Number)
+            .ToListAsync();
+
+        return availableSeats;
+    }
 }
