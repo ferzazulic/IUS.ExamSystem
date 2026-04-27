@@ -8,6 +8,7 @@ import {Login} from "./pages/Login.jsx";
 import { Register } from "./pages/Register";
 import {Home} from "./pages/Home.jsx";
 import { Dashboard } from "./pages/Dashboard";
+import { StudentDashboard } from "./pages/StudentDashboard.jsx";
 import {GlassWrapper} from "./components/layout/GlassWrapper.jsx";
 import { Exams } from "./pages/Exams";
 import { Seats } from "./pages/Seats";
@@ -22,6 +23,7 @@ function App() {
                 <Route path="/login" element={<Login/>}/>
                 <Route path="/register" element={<Register />} />
                 <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/student-dashboard" element={<StudentDashboard />} />
                 <Route path="/exams" element={<Exams />} />
                 <Route path="/seats" element={<Seats />} />
             </Routes>

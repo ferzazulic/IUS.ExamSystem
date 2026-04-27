@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 export function Login() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [role, setRole] = useState("student");
 
     const navigate = useNavigate();
 
@@ -39,6 +40,44 @@ export function Login() {
                         onChange={(e) => setPassword(e.target.value)}
                     />
 
+                    {/* ROLE SELECTOR */}
+                    <div style={{
+                        display: "flex",
+                        gap: "10px",
+                        margin: "8px 0"
+                    }}>
+                        <button
+                            onClick={() => setRole("student")}
+                            style={{
+                                flex: 1,
+                                padding: "10px",
+                                borderRadius: "10px",
+                                border: role === "student" ? "2px solid #6c63ff" : "2px solid #ddd",
+                                background: role === "student" ? "#f0eeff" : "white",
+                                color: role === "student" ? "#6c63ff" : "#999",
+                                fontWeight: "600",
+                                cursor: "pointer"
+                            }}
+                        >
+                            🎓 Student
+                        </button>
+                        <button
+                            onClick={() => setRole("professor")}
+                            style={{
+                                flex: 1,
+                                padding: "10px",
+                                borderRadius: "10px",
+                                border: role === "professor" ? "2px solid #6c63ff" : "2px solid #ddd",
+                                background: role === "professor" ? "#f0eeff" : "white",
+                                color: role === "professor" ? "#6c63ff" : "#999",
+                                fontWeight: "600",
+                                cursor: "pointer"
+                            }}
+                        >
+                            👨‍🏫 Professor
+                        </button>
+                    </div>
+
                     <button
                         className="login-btn"
                         onClick={() => {
@@ -51,19 +90,14 @@ export function Login() {
                                 return;
                             }
 
-                            if (
-                                email === storedUser.email &&
-                                password === storedUser.password
-                            ) {
-                                localStorage.setItem(
-                                    "auth",
-                                    JSON.stringify({
-                                        email,
-                                        role: "professor"
-                                    })
-                                );
+                            if (email === storedUser.email && password === storedUser.password) {
+                                localStorage.setItem("auth", JSON.stringify({ email, role }));
 
-                                navigate("/dashboard");
+                                if (role === "professor") {
+                                    navigate("/dashboard");
+                                } else {
+                                    navigate("/student-dashboard");
+                                }
                             } else {
                                 alert("Invalid email or password");
                             }
