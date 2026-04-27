@@ -5,7 +5,7 @@ export function Dashboard() {
     const navigate = useNavigate();
 
     // 👤 user
-    const user = JSON.parse(localStorage.getItem("auth"));
+    const user = localStorage.getItem("token");
 
     // 🔒 AUTH PROTECTION
     useEffect(() => {
@@ -64,7 +64,8 @@ export function Dashboard() {
                         className="nav-pill"
                         style={{ marginTop: "auto" }}
                         onClick={() => {
-                            localStorage.removeItem("auth");
+                            localStorage.removeItem("token");
+                            localStorage.removeItem("role");
                             navigate("/login");
                         }}
                     >

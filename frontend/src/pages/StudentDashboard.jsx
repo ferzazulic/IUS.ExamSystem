@@ -38,7 +38,7 @@ const MY_CLASSES = [
 
 export function StudentDashboard() {
     const navigate = useNavigate();
-    const user = JSON.parse(localStorage.getItem("auth"));
+    const user = localStorage.getItem("token");
 
     useEffect(() => {
         if (!user) navigate("/login");
@@ -142,7 +142,8 @@ export function StudentDashboard() {
                         className="nav-pill"
                         style={{ marginTop: "auto" }}
                         onClick={() => {
-                            localStorage.removeItem("auth");
+                            localStorage.removeItem("token");
+                             localStorage.removeItem("role");
                             navigate("/login");
                         }}
                     >

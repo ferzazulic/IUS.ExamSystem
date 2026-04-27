@@ -9,7 +9,7 @@ export function Exams() {
     const [time, setTime] = useState("");
 
     // 👤 trenutno logovani user
-    const user = JSON.parse(localStorage.getItem("auth"));
+    const user = localStorage.getItem("token");
 
     const storageKey = `exams-${user?.email}`;
 

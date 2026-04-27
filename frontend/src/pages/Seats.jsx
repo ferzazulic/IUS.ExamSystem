@@ -8,7 +8,7 @@ export function Seats() {
     const exam = location.state;
 
     // 👤 user
-    const user = JSON.parse(localStorage.getItem("auth"));
+    const user = localStorage.getItem("token");
 
     // 🔑 KEY PO USERU + EXAMU
     const storageKey = `seating-${user?.email}-${exam?.id}`;

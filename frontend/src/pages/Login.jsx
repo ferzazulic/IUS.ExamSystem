@@ -1,11 +1,12 @@
 import { useState } from "react";
+import apiClient from "../api/apiClient";
 import logo from "../assets/iuslogo.png";
 import { useNavigate } from "react-router-dom";
 
 export function Login() {
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [role, setRole] = useState("student");
+     const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
 
     const navigate = useNavigate();
 
@@ -40,72 +41,31 @@ export function Login() {
                         onChange={(e) => setPassword(e.target.value)}
                     />
 
-                    {/* ROLE SELECTOR */}
-                    <div style={{
-                        display: "flex",
-                        gap: "10px",
-                        margin: "8px 0"
-                    }}>
-                        <button
-                            onClick={() => setRole("student")}
-                            style={{
-                                flex: 1,
-                                padding: "10px",
-                                borderRadius: "10px",
-                                border: role === "student" ? "2px solid #6c63ff" : "2px solid #ddd",
-                                background: role === "student" ? "#f0eeff" : "white",
-                                color: role === "student" ? "#6c63ff" : "#999",
-                                fontWeight: "600",
-                                cursor: "pointer"
-                            }}
-                        >
-                            🎓 Student
-                        </button>
-                        <button
-                            onClick={() => setRole("professor")}
-                            style={{
-                                flex: 1,
-                                padding: "10px",
-                                borderRadius: "10px",
-                                border: role === "professor" ? "2px solid #6c63ff" : "2px solid #ddd",
-                                background: role === "professor" ? "#f0eeff" : "white",
-                                color: role === "professor" ? "#6c63ff" : "#999",
-                                fontWeight: "600",
-                                cursor: "pointer"
-                            }}
-                        >
-                            👨‍🏫 Professor
-                        </button>
-                    </div>
-
                     <button
-                        className="login-btn"
-                        onClick={() => {
-                            if (!email || !password) return;
-
-                            const storedUser = JSON.parse(localStorage.getItem("user"));
-
-                            if (!storedUser) {
-                                alert("No account found. Please register.");
-                                return;
-                            }
-
-                            if (email === storedUser.email && password === storedUser.password) {
-                                localStorage.setItem("auth", JSON.stringify({ email, role }));
-
-                                if (role === "professor") {
-                                    navigate("/dashboard");
-                                } else {
-                                    navigate("/student-dashboard");
-                                }
-                            } else {
-                                alert("Invalid email or password");
-                            }
-                        }}
-                    >
-                        Log in
-                    </button>
-
+      className="login-btn"
+      onClick={async () => {
+          if (!email || !password) return;
+          setError("");
+          try {
+              const res = await apiClient.post("/api/Auth/login", { email, password });
+              const token = res.data.token;
+              const payload = JSON.parse(atob(token.split(".")[1]));
+              const role = payload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
+              localStorage.setItem("token", token);
+              localStorage.setItem("role", role);
+              if (role === "Staff" || role === "Admin") {
+                  navigate("/dashboard");
+              } else {
+                  navigate("/student-dashboard");
+              }
+          } catch {
+              setError("Invalid email or password");
+          }
+      }}
+  >
+      Log in
+  </button>
+{error && <p style={{ color: "red", fontSize: "14px", margin: "4px 0" }}>{error}</p>}
                     <p className="login-forgot">Forgot password?</p>
 
                     <div className="login-divider"></div>

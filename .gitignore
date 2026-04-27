@@ -4,6 +4,8 @@
 *.user
 *.suo
 *.sln.iml
+.claude/
+*.claude
 
 ## Build folders
 bin/

@@ -99,24 +99,24 @@ namespace IUS.ExamSystem.Infrastructure.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_ExamAssignments", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_ExamAssignments_Exams_ExamId",
-                        column: x => x.ExamId,
-                        principalTable: "Exams",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_ExamAssignments_Seats_SeatId",
-                        column: x => x.SeatId,
-                        principalTable: "Seats",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_ExamAssignments_Users_UserId",
-                        column: x => x.UserId,
-                        principalTable: "Users",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                     table.ForeignKey(
+      name: "FK_ExamAssignments_Exams_ExamId",
+      column: x => x.ExamId,
+      principalTable: "Exams",
+      principalColumn: "Id",
+      onDelete: ReferentialAction.NoAction);
+  table.ForeignKey(
+      name: "FK_ExamAssignments_Seats_SeatId",
+      column: x => x.SeatId,
+      principalTable: "Seats",
+      principalColumn: "Id",
+      onDelete: ReferentialAction.NoAction);
+  table.ForeignKey(
+      name: "FK_ExamAssignments_Users_UserId",
+      column: x => x.UserId,
+      principalTable: "Users",
+      principalColumn: "Id",
+      onDelete: ReferentialAction.NoAction);
                 });
 
             migrationBuilder.CreateIndex(
