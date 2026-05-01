@@ -1,20 +1,18 @@
 import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 export function Dashboard() {
     const navigate = useNavigate();
 
-    // 👤 user
     const user = localStorage.getItem("token");
 
-    // 🔒 AUTH PROTECTION
     useEffect(() => {
         if (!user) {
             navigate("/login");
         }
     }, []);
 
-    // 📊 LOAD PO USERU
+    // 📊 EXAMS
     const exams = JSON.parse(
         localStorage.getItem(`exams-${user?.email}`)
     ) || [];
@@ -25,6 +23,11 @@ export function Dashboard() {
         (total, exam) => total + (exam.students?.length || 0),
         0
     );
+
+    //  COURSES
+    const [courses, setCourses] = useState(() => {
+        return JSON.parse(localStorage.getItem("courses")) || [];
+    });
 
     return (
         <div className="canvas">
@@ -52,12 +55,21 @@ export function Dashboard() {
 
                     <div
                         className="nav-pill"
+                        onClick={() => navigate("/courses")}
+                    >
+                        📚 Courses
+                    </div>
+
+                    <div
+                        className="nav-pill"
                         onClick={() => navigate("/seats")}
                     >
                         🪑 Seat Allocation
                     </div>
 
-                    <div className="nav-pill">🏫 Rooms</div>
+                    <div className="nav-pill" onClick={() => navigate("/rooms")}>
+                        🏫 Rooms
+                    </div>
 
                     {/* LOGOUT */}
                     <div
@@ -85,7 +97,7 @@ export function Dashboard() {
                     <div className="dashboard-hero-card">
                         <div>
                             <span className="hero-badge">Professor Panel</span>
-                            <h2>Manage exams & seating</h2>
+                            <h2>Manage exams & courses</h2>
 
                             <div className="hero-stats">
 
@@ -100,57 +112,14 @@ export function Dashboard() {
                                 </div>
 
                                 <div className="mini-stat">
-                                    <strong>5</strong>
-                                    <span>Rooms</span>
+                                    <strong>{courses.length}</strong>
+                                    <span>Courses</span>
                                 </div>
 
                             </div>
                         </div>
 
-                        <div style={{ fontSize: "4rem" }}>📝</div>
-                    </div>
-
-                    {/* ACTION CARDS */}
-                    <div className="feature-hub-grid">
-
-                        <div
-                            className="hub-card"
-                            onClick={() => navigate("/exams")}
-                        >
-                            <div className="hub-icon">📝</div>
-                            <div>
-                                <strong>Manage Exams</strong>
-                                <p>Create and schedule exams</p>
-                            </div>
-                        </div>
-
-                        <div
-                            className="hub-card"
-                            onClick={() => navigate("/seats")}
-                        >
-                            <div className="hub-icon">🪑</div>
-                            <div>
-                                <strong>Seat Allocation</strong>
-                                <p>Assign students to seats</p>
-                            </div>
-                        </div>
-
-                        <div className="hub-card">
-                            <div className="hub-icon">🏫</div>
-                            <div>
-                                <strong>Rooms</strong>
-                                <p>Manage room capacity</p>
-                            </div>
-                        </div>
-
-                        <div className="hub-card">
-                            <div className="hub-icon">📊</div>
-                            <div>
-                                <strong>Reports</strong>
-                                <p>View exam analytics</p>
-                            </div>
-                        </div>
-
+                        <div style={{ fontSize: "4rem" }}>📊</div>
                     </div>
 
                 </div>
