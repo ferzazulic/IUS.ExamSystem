@@ -1,27 +1,49 @@
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
+//  PREDEFINED ROOMS
+const rooms = [
+    { id: 1, name: "Sports Hall", capacity: 200 },
+    { id: 2, name: "BF1.17", capacity: 40 },
+    { id: 3, name: "BF2.15", capacity: 80 },
+    { id: 4, name: "BF1.18", capacity: 35 },
+    { id: 5, name: "BF2.10", capacity: 60 }
+];
+
 export function Seats() {
     const location = useLocation();
     const navigate = useNavigate();
 
     const exam = location.state;
 
-    // 👤 user
     const user = localStorage.getItem("token");
-
-    // 🔑 KEY PO USERU + EXAMU
     const storageKey = `seating-${user?.email}-${exam?.id}`;
 
-    const rows = Array.from({ length: 12 }, (_, i) =>
+    //  ROOM + CAPACITY
+    const room = rooms.find(r => r.id == exam?.roomId);
+    const capacity = room?.capacity || 0;
+
+    let numRows;
+    let seatsPerRow;
+
+
+    if (capacity >= 150) {
+        seatsPerRow = 8; //
+        numRows = Math.ceil(capacity / seatsPerRow);
+    } else {
+        numRows = Math.ceil(Math.sqrt(capacity));
+        seatsPerRow = Math.ceil(capacity / numRows);
+    }
+    const seatsPerSide = Math.ceil(seatsPerRow / 2);
+
+    const rows = Array.from({ length: numRows }, (_, i) =>
         String.fromCharCode(65 + i)
     );
 
-    const seatsPerSide = 6;
+    //  NEW STUDENT MODEL
+    const students = exam?.students || [];
 
-    const students = exam?.students?.filter(s => s.enrolled) || [];
-
-    // 💾 LOAD
+    //  LOAD
     const [seatMap, setSeatMap] = useState(() => {
         const saved = localStorage.getItem(storageKey);
         return saved ? JSON.parse(saved) : {};
@@ -31,32 +53,33 @@ export function Seats() {
     const [history, setHistory] = useState([]);
     const [mode, setMode] = useState("manual");
 
-    // 🔄 SAVE
+    // 💾 SAVE
     useEffect(() => {
         localStorage.setItem(storageKey, JSON.stringify(seatMap));
     }, [seatMap, storageKey]);
 
-    // MANUAL
-    const assignStudent = (studentName) => {
+    // 🔧 MANUAL ASSIGN
+    const assignStudent = (student) => {
         if (!selectedSeat) return;
 
         setHistory(prev => [...prev, seatMap]);
 
         const updated = { ...seatMap };
 
+        // ukloni ako već sjedi
         Object.keys(updated).forEach(seat => {
-            if (updated[seat] === studentName) {
+            if (updated[seat] === student) {
                 delete updated[seat];
             }
         });
 
-        updated[selectedSeat] = studentName;
+        updated[selectedSeat] = student;
 
         setSeatMap(updated);
         setSelectedSeat(null);
     };
 
-    // REMOVE
+    //  REMOVE
     const removeStudent = (seatLabel) => {
         setHistory(prev => [...prev, seatMap]);
 
@@ -66,35 +89,32 @@ export function Seats() {
         setSeatMap(updated);
     };
 
-    // UNDO
+    // ↩ UNDO (reset)
     const undo = () => {
         setSeatMap({});
         setHistory([]);
     };
 
-    //AUTO
+    //  AUTO ASSIGN (random + spacing)
     const autoAssign = () => {
         let updated = {};
 
-        // 🔀 shuffle students
         const shuffledStudents = [...students].sort(() => Math.random() - 0.5);
 
-        // 🔀 napravi listu svih seatova
         let allSeats = [];
 
         rows.forEach(row => {
-            for (let i = 1; i <= seatsPerSide * 2; i++) {
+            for (let i = 1; i <= seatsPerRow; i++) {
                 allSeats.push(`${row}${i}`);
             }
         });
 
-        // 🔀 shuffle seats
-        const shuffledSeats = allSeats.sort(() => Math.random() - 0.5);
 
-        // 🎯 assign
+        const spacedSeats = allSeats.filter((_, i) => i % 2 === 0);
+
         shuffledStudents.forEach((student, index) => {
-            if (shuffledSeats[index]) {
-                updated[shuffledSeats[index]] = student.name;
+            if (spacedSeats[index]) {
+                updated[spacedSeats[index]] = student;
             }
         });
 
@@ -106,6 +126,7 @@ export function Seats() {
     return (
         <div className="academia-container">
 
+            {/* HEADER */}
             <div className="page-container exams-header">
 
                 <button className="back-btn" onClick={() => navigate(-1)}>
@@ -115,7 +136,9 @@ export function Seats() {
                 <div className="title-block">
                     <h1 className="exams-title">Seat Allocation</h1>
                     <p className="exams-sub">
-                        {exam?.name} — {exam?.date} — {exam?.time}
+                        {exam?.course} — {exam?.date} — {exam?.time}
+                        <br />
+                        Room: {room?.name} ({capacity} seats)
                     </p>
                 </div>
 
@@ -130,16 +153,13 @@ export function Seats() {
 
                     <button
                         className={`mode-btn ${mode === "auto" ? "active" : ""}`}
-                        onClick={() => {
-                            autoAssign();
-                            setMode("auto");
-                        }}
+                        onClick={autoAssign}
                     >
                         Auto Assign
                     </button>
 
                     <button className="mode-btn danger" onClick={undo}>
-                        Undo
+                        Reset
                     </button>
 
                 </div>
@@ -158,8 +178,8 @@ export function Seats() {
                     >
                         <option value="" disabled>Select student</option>
                         {students.map((s, i) => (
-                            <option key={i} value={s.name}>
-                                {s.name}
+                            <option key={i} value={s}>
+                                {s}
                             </option>
                         ))}
                     </select>
@@ -168,13 +188,30 @@ export function Seats() {
 
             {/* SEATS */}
             <div className="seats-wrapper">
-                {rows.map((row) => (
-                    <div className="seat-row" key={row}>
+                {rows.map((row, rowIndex) => {
 
-                        {/* LEFT */}
-                        {Array.from({ length: seatsPerSide }).map((_, i) => {
-                            const label = `${row}${i + 1}`;
-                            return (
+                    const start = rowIndex * seatsPerRow;
+                    const end = Math.min(start + seatsPerRow, capacity);
+
+                    const rowSeats = [];
+
+                    for (let i = start; i < end; i++) {
+                        const col = i - start;
+                        const label = `${row}${col + 1}`;
+                        rowSeats.push(label);
+                    }
+
+                    if (rowSeats.length === 0) return null;
+
+                    return (
+                        <div
+                            className="seat-row"
+                            key={row}
+                            style={{
+                                justifyContent: "center" // 🔥 CENTRIRA red
+                            }}
+                        >
+                            {rowSeats.map(label => (
                                 <Seat
                                     key={label}
                                     label={label}
@@ -187,46 +224,24 @@ export function Seats() {
                                             : null
                                     }
                                 />
-                            );
-                        })}
-
-                        <div className="seat-aisle"></div>
-
-                        {/* RIGHT */}
-                        {Array.from({ length: seatsPerSide }).map((_, i) => {
-                            const label = `${row}${i + 1 + seatsPerSide}`;
-                            return (
-                                <Seat
-                                    key={label}
-                                    label={label}
-                                    student={seatMap[label]}
-                                    onClick={() =>
-                                        mode === "manual"
-                                            ? seatMap[label]
-                                                ? removeStudent(label)
-                                                : setSelectedSeat(label)
-                                            : null
-                                    }
-                                />
-                            );
-                        })}
-
-                    </div>
-                ))}
+                            ))}
+                        </div>
+                    );
+                })}
             </div>
 
         </div>
     );
 }
 
-/* SEAT */
+// 🪑 SEAT COMPONENT
 function Seat({ label, student, onClick }) {
     return (
         <div
             className={`seat ${student ? "active" : ""}`}
             onClick={onClick}
         >
-            {student ? student : label}
+            {student || label}
         </div>
     );
 }

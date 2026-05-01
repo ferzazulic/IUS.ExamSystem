@@ -1,33 +1,35 @@
-import {useState} from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
+import { useState } from 'react'
 import './App.css'
-import {Route, Routes} from "react-router-dom";
-import {Login} from "./pages/Login.jsx";
+import { Route, Routes, Navigate } from "react-router-dom";
+
+import { Login } from "./pages/Login.jsx";
 import { Register } from "./pages/Register";
-import {Home} from "./pages/Home.jsx";
 import { Dashboard } from "./pages/Dashboard";
 import { StudentDashboard } from "./pages/StudentDashboard.jsx";
-import {GlassWrapper} from "./components/layout/GlassWrapper.jsx";
 import { Exams } from "./pages/Exams";
 import { Seats } from "./pages/Seats";
+import { Courses} from "./pages/Courses";
+import {Rooms} from "./pages/Rooms";
 
 
 function App() {
-    const [count, setCount] = useState(0)
+    const [count, setCount] = useState(0);
 
     return (
-            <Routes>
-                <Route path="/" element={<Home/>}/>
-                <Route path="/login" element={<Login/>}/>
-                <Route path="/register" element={<Register />} />
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/student-dashboard" element={<StudentDashboard />} />
-                <Route path="/exams" element={<Exams />} />
-                <Route path="/seats" element={<Seats />} />
-            </Routes>
-    )
+        <Routes>
+
+            <Route path="/" element={<Navigate to="/login" />} />
+
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/student-dashboard" element={<StudentDashboard />} />
+            <Route path="/exams" element={<Exams />} />
+            <Route path="/seats" element={<Seats />} />
+            <Route path="/courses" element={<Courses />} />
+            <Route path="/rooms" element={<Rooms />} />
+        </Routes>
+    );
 }
 
-export default App
+export default App;
