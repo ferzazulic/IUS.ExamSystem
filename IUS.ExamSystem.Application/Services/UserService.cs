@@ -51,7 +51,23 @@ public class UserService : IUserService
     {
         return await _context.Users.ToListAsync();
     }
+public async Task<bool> DeleteUser(int id)
+  {
+      var user = await _context.Users.FindAsync(id);
+      if (user == null) return false;
+      _context.Users.Remove(user);
+      await _context.SaveChangesAsync();
+      return true;
+  }
 
+  public async Task<bool> ChangeUserRole(int id, Role newRole)
+  {
+      var user = await _context.Users.FindAsync(id);
+      if (user == null) return false;
+      user.Role = newRole;
+      await _context.SaveChangesAsync();
+      return true;
+  }
     private string HashPassword(string password)
     {
         using var sha256 = SHA256.Create();

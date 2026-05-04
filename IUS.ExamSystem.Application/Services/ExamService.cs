@@ -26,54 +26,49 @@ public class ExamService : IExamService
         if (exam == null)
             throw new ArgumentException($"Exam with ID {examId} not found");
 
-        // Get all students who don't already have an assignment for this exam
-        var assignedStudents = await _context.ExamAssignments
-            .Where(ea => ea.ExamId == examId)
-            .Select(ea => ea.UserId)
-            .ToListAsync();
-
-        var students = await _context.Users
-            .Where(u => u.Role == Role.Student && !assignedStudents.Contains(u.Id))
-            .OrderBy(u => u.FullName) // Smart allocation: alphabetical order
-            .ToListAsync();
-
-        // Get available seats (ordered by seat number for systematic allocation)
-        var availableSeats = await _context.Seats
+        var allSeats = await _context.Seats
             .Where(s => s.RoomId == exam.RoomId)
             .OrderBy(s => s.Number)
             .ToListAsync();
 
-        if (availableSeats.Count == 0)
+        if (allSeats.Count == 0)
             throw new InvalidOperationException("No available seats in the exam room");
 
-        var assignments = new List<ExamAssignment>();
+        // Get all existing assignments for this exam (enrolled students waiting for a seat)
+        var existingAssignments = await _context.ExamAssignments
+            .Where(ea => ea.ExamId == examId)
+            .ToListAsync();
+
+        var enrolledStudentIds = existingAssignments.Select(ea => ea.UserId).ToHashSet();
+
+        // Also get students not yet enrolled
+        var allStudents = await _context.Users
+            .Where(u => u.Role == Role.Student)
+            .OrderBy(u => u.FullName)
+            .ToListAsync();
+
         var seatIndex = 0;
+        var newAssignments = new List<ExamAssignment>();
 
-        foreach (var student in students)
+        foreach (var student in allStudents)
         {
-            // Check for scheduling conflicts before allocating
             if (await _conflictService.HasExamConflict(student.Id, examId))
-                continue; // Skip students with conflicts
+                continue;
 
-            var seat = availableSeats[seatIndex % availableSeats.Count];
-
-            assignments.Add(new ExamAssignment
-            {
-                UserId = student.Id,
-                ExamId = examId,
-                SeatId = seat.Id
-            });
-
+            var seat = allSeats[seatIndex % allSeats.Count];
             seatIndex++;
+
+            var existing = existingAssignments.FirstOrDefault(ea => ea.UserId == student.Id);
+            if (existing != null)
+                existing.SeatId = seat.Id; // Update enrolled student's seat
+            else
+                newAssignments.Add(new ExamAssignment { UserId = student.Id, ExamId = examId, SeatId = seat.Id });
         }
 
-        _context.ExamAssignments.AddRange(assignments);
+        _context.ExamAssignments.AddRange(newAssignments);
         await _context.SaveChangesAsync();
     }
 
-    /// <summary>
-    /// Allocates seats for specific students only, with conflict detection
-    /// </summary>
     public async Task AllocateSeatsForStudents(int examId, List<int> studentIds)
     {
         var exam = await _context.Exams
@@ -88,32 +83,34 @@ public class ExamService : IExamService
             .OrderBy(u => u.FullName)
             .ToListAsync();
 
-        var availableSeats = await _context.Seats
+        var allSeats = await _context.Seats
             .Where(s => s.RoomId == exam.RoomId)
             .OrderBy(s => s.Number)
             .ToListAsync();
 
-        var assignments = new List<ExamAssignment>();
+        var existingAssignments = await _context.ExamAssignments
+            .Where(ea => ea.ExamId == examId && studentIds.Contains(ea.UserId))
+            .ToListAsync();
+
         var seatIndex = 0;
+        var newAssignments = new List<ExamAssignment>();
 
         foreach (var student in students)
         {
-            // Check for scheduling conflicts
             if (await _conflictService.HasExamConflict(student.Id, examId))
                 continue;
 
-            var seat = availableSeats[seatIndex % availableSeats.Count];
-            assignments.Add(new ExamAssignment
-            {
-                UserId = student.Id,
-                ExamId = examId,
-                SeatId = seat.Id
-            });
-
+            var seat = allSeats[seatIndex % allSeats.Count];
             seatIndex++;
+
+            var existing = existingAssignments.FirstOrDefault(ea => ea.UserId == student.Id);
+            if (existing != null)
+                existing.SeatId = seat.Id;
+            else
+                newAssignments.Add(new ExamAssignment { UserId = student.Id, ExamId = examId, SeatId = seat.Id });
         }
 
-        _context.ExamAssignments.AddRange(assignments);
+        _context.ExamAssignments.AddRange(newAssignments);
         await _context.SaveChangesAsync();
     }
 
@@ -160,4 +157,53 @@ public class ExamService : IExamService
 
         return availableSeats;
     }
+    public async Task<bool> DeleteExam(int id)
+  {
+      var exam = await _context.Exams.FindAsync(id);
+      if (exam == null) return false;
+      _context.Exams.Remove(exam);
+      await _context.SaveChangesAsync();
+      return true;
+  }
+  public async Task EnrollStudent(int examId, int studentId, int? seatId = null)
+  {
+      var already = await _context.ExamAssignments
+          .AnyAsync(ea => ea.ExamId == examId && ea.UserId == studentId);
+      if (already) return;
+
+      if (seatId.HasValue)
+      {
+          var seatTaken = await _context.ExamAssignments
+              .AnyAsync(ea => ea.ExamId == examId && ea.SeatId == seatId);
+          if (seatTaken)
+              throw new InvalidOperationException("That seat is already taken. Please choose another.");
+      }
+
+      _context.ExamAssignments.Add(new ExamAssignment
+      {
+          ExamId = examId,
+          UserId = studentId,
+          SeatId = seatId
+      });
+      await _context.SaveChangesAsync();
+  }
+
+  public async Task UnenrollStudent(int examId, int studentId)
+  {
+      var assignment = await _context.ExamAssignments
+          .FirstOrDefaultAsync(ea => ea.ExamId == examId && ea.UserId == studentId);
+      if (assignment == null) return;
+      _context.ExamAssignments.Remove(assignment);
+      await _context.SaveChangesAsync();
+  }
+
+  public async Task<List<ExamAssignment>> GetStudentAssignments(int studentId)
+  {
+      return await _context.ExamAssignments
+          .Include(a => a.Exam)
+              .ThenInclude(e => e.Room)
+          .Include(a => a.Seat)
+          .Where(a => a.UserId == studentId)
+          .ToListAsync();
+  }
 }

@@ -51,10 +51,14 @@ export function Login() {
               const token = res.data.token;
               const payload = JSON.parse(atob(token.split(".")[1]));
               const role = payload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
+              const userId = payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"];
               localStorage.setItem("token", token);
               localStorage.setItem("role", role);
-              if (role === "Staff" || role === "Admin") {
-                  navigate("/dashboard");
+              localStorage.setItem("userId", userId);
+              if (role === "Admin") {
+                 navigate("/admin-dashboard");
+                } else if (role === "Staff") {
+                    navigate("/dashboard");
               } else {
                   navigate("/student-dashboard");
               }

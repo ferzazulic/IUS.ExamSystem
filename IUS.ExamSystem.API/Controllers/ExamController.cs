@@ -18,7 +18,7 @@ public class ExamController : ControllerBase
         _conflictService = conflictService;
     }
 
-    [HttpPost("allocate/{examId}")]
+    [HttpPost("allocate/{examId:int}")]
     [Authorize(Roles = "Admin,Staff")]
     public async Task<IActionResult> AllocateSeats(int examId)
     {
@@ -33,7 +33,7 @@ public class ExamController : ControllerBase
         }
     }
 
-    [HttpPost("allocate-selected/{examId}")]
+    [HttpPost("allocate-selected/{examId:int}")]
     [Authorize(Roles = "Admin,Staff")]
     public async Task<IActionResult> AllocateSeatsForStudents(int examId, [FromBody] AllocateSeatsRequest request)
     {
@@ -83,7 +83,7 @@ public class ExamController : ControllerBase
         }
     }
 
-    [HttpGet("{examId}")]
+    [HttpGet("{examId:int}")]
     [Authorize]
     public async Task<IActionResult> GetExamById(int examId)
     {
@@ -94,8 +94,8 @@ public class ExamController : ControllerBase
         return Ok(exam);
     }
 
-    [HttpGet("{examId}/available-seats")]
-    [Authorize(Roles = "Admin,Staff")]
+    [HttpGet("{examId:int}/available-seats")]
+    [Authorize]
     public async Task<IActionResult> GetAvailableSeats(int examId)
     {
         try
@@ -158,6 +158,59 @@ public class ExamController : ControllerBase
             return BadRequest(new { error = ex.Message });
         }
     }
+    [HttpDelete("{examId:int}")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> DeleteExam(int examId)
+    {
+        var result = await _service.DeleteExam(examId);
+        if (!result) return NotFound(new { message = "Exam not found" });
+        return Ok(new { message = "Exam deleted" });
+    }
+
+    [HttpGet("my-seats")]
+    [Authorize(Roles = "Student")]
+    public async Task<IActionResult> GetMySeats()
+    {
+        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (userIdClaim == null) return Unauthorized();
+
+        var assignments = await _service.GetStudentAssignments(int.Parse(userIdClaim));
+        return Ok(assignments.Select(a => new
+        {
+            examId = a.ExamId,
+            subject = a.Exam.Subject,
+            examDate = a.Exam.StartTime,
+            roomName = a.Exam.Room?.Name,
+            seatNumber = a.SeatId.HasValue ? a.Seat?.Number : (int?)null
+        }));
+    }
+
+    [HttpPost("{examId:int}/enroll")]
+    [Authorize(Roles = "Student")]
+    public async Task<IActionResult> Enroll(int examId, [FromBody] EnrollRequest request)
+    {
+        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (userIdClaim == null) return Unauthorized();
+        try
+        {
+            await _service.EnrollStudent(examId, int.Parse(userIdClaim), request?.SeatId);
+            return Ok(new { message = "Enrolled successfully" });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
+
+    [HttpDelete("{examId:int}/enroll")]
+    [Authorize(Roles = "Student")]
+    public async Task<IActionResult> Unenroll(int examId)
+    {
+        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (userIdClaim == null) return Unauthorized();
+        await _service.UnenrollStudent(examId, int.Parse(userIdClaim));
+        return Ok(new { message = "Unenrolled successfully" });
+    }
 }
 
 public class AllocateSeatsRequest
@@ -177,4 +230,9 @@ public class CreateExamRequest
     public DateTime StartTime { get; set; }
     public DateTime EndTime { get; set; }
     public int RoomId { get; set; }
+}
+
+public class EnrollRequest
+{
+    public int? SeatId { get; set; }
 }

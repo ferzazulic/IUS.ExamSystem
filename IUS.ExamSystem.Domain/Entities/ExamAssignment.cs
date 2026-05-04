@@ -10,7 +10,7 @@ public class ExamAssignment
     public int ExamId { get; set; }
     public Exam Exam { get; set; }
 
-    public int SeatId { get; set; }
+    public int? SeatId { get; set; }
     public Seat Seat { get; set; }
 
     public decimal? Score { get; set; }

@@ -10,4 +10,8 @@ public interface IExamService
     Task<Exam> GetExamById(int id);
     Task<Exam> CreateExam(Exam exam);
     Task<List<Seat>> GetAvailableSeats(int examId);
+    Task<bool> DeleteExam(int id);
+    Task EnrollStudent(int examId, int studentId, int? seatId = null);
+    Task UnenrollStudent(int examId, int studentId);
+    Task<List<ExamAssignment>> GetStudentAssignments(int studentId);
 }

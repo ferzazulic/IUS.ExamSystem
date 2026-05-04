@@ -6,6 +6,7 @@ import { Login } from "./pages/Login.jsx";
 import { Register } from "./pages/Register";
 import { Dashboard } from "./pages/Dashboard";
 import { StudentDashboard } from "./pages/StudentDashboard.jsx";
+import { AdminDashboard } from "./pages/AdminDashboard";
 import { Exams } from "./pages/Exams";
 import { Seats } from "./pages/Seats";
 import { Courses} from "./pages/Courses";
@@ -24,6 +25,7 @@ function App() {
             <Route path="/register" element={<Register />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/student-dashboard" element={<StudentDashboard />} />
+            <Route path="/admin-dashboard" element={<AdminDashboard />} />
             <Route path="/exams" element={<Exams />} />
             <Route path="/seats" element={<Seats />} />
             <Route path="/courses" element={<Courses />} />

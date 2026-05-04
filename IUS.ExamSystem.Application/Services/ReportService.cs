@@ -40,7 +40,7 @@ public class ReportService : IReportService
             StudentId = a.UserId,
             StudentName = a.Student.FullName,
             StudentEmail = a.Student.Email,
-            SeatNumber = a.Seat.Number,
+            SeatNumber = a.Seat?.Number ?? 0,
             RoomName = exam.Room.Name,
             Score = a.Score,
             Grade = a.Grade,
@@ -83,7 +83,7 @@ public class ReportService : IReportService
             ExamDate = a.Exam.StartTime,
             Score = a.Score,
             Grade = a.Grade,
-            SeatNumber = a.Seat.Number
+            SeatNumber = a.Seat?.Number ?? 0
         }).ToList();
 
         var averageGrade = examScores.Any(es => es.Grade.HasValue)
@@ -125,7 +125,7 @@ public class ReportService : IReportService
                 StudentId = a.UserId,
                 StudentName = a.Student.FullName,
                 StudentEmail = a.Student.Email,
-                SeatNumber = a.Seat.Number,
+                SeatNumber = a.Seat?.Number ?? 0,
                 RoomName = exam.Room.Name,
                 Score = a.Score,
                 Grade = a.Grade,
@@ -172,7 +172,7 @@ public class ReportService : IReportService
                 ExamDate = a.Exam.StartTime,
                 Score = a.Score,
                 Grade = a.Grade,
-                SeatNumber = a.Seat.Number
+                SeatNumber = a.Seat?.Number ?? 0
             }).ToList();
 
             var averageGrade = examScores.Any(es => es.Grade.HasValue)

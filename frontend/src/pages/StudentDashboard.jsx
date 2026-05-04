@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-
+import apiClient from "../api/apiClient"; 
 const MY_CLASSES = [
     {
         code: "CS413.1",
@@ -46,59 +46,72 @@ export function StudentDashboard() {
 
     const [exams, setExams] = useState([]);
     const [activeNav, setActiveNav] = useState("dashboard");
+    const [mySeats, setMySeats] = useState([]);
+    const [enrolledExamIds, setEnrolledExamIds] = useState(new Set());
+
+    const fetchMySeats = () => {
+        apiClient.get("/api/exam/my-seats")
+            .then(res => {
+                const data = res.data || [];
+                setMySeats(data);
+                setEnrolledExamIds(new Set(data.map(s => s.examId)));
+            })
+            .catch(console.error);
+    };
 
     useEffect(() => {
-        const allExams = [];
-        for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            if (key && key.startsWith("exams-")) {
-                const data = JSON.parse(localStorage.getItem(key)) || [];
-                data.forEach(exam => {
-                    const studentName = user?.email?.split("@")[0] || user?.email;
-                    const studentEntry = exam.students?.find(s => s.name === studentName);
-                    allExams.push({
-                        ...exam,
-                        enrolled: studentEntry ? studentEntry.enrolled : false
-                    });
-                });
-            }
-        }
-        setExams(allExams);
+        fetchMySeats();
     }, []);
 
-    const toggleEnroll = (examId) => {
-        for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            if (key && key.startsWith("exams-")) {
-                const data = JSON.parse(localStorage.getItem(key)) || [];
-                const examIndex = data.findIndex(e => e.id === examId);
-                if (examIndex !== -1) {
-                    const exam = data[examIndex];
-                    const studentName = user?.email?.split("@")[0] || user?.email;
-                    const existingIndex = exam.students.findIndex(s => s.name === studentName);
+    useEffect(() => {
+        apiClient.get("/api/exam")
+            .then(res => setExams(res.data.exams || []))
+            .catch(console.error);
+    }, []);
 
-                    if (existingIndex !== -1) {
-                        exam.students[existingIndex].enrolled = !exam.students[existingIndex].enrolled;
-                    } else {
-                        exam.students.push({ name: studentName, enrolled: true });
-                    }
+    const [seatModal, setSeatModal] = useState(null); // { examId, examName, seats: [] }
+    const [selectedSeatId, setSelectedSeatId] = useState(null);
+    const [seatLoading, setSeatLoading] = useState(false);
 
-                    data[examIndex] = exam;
-                    localStorage.setItem(key, JSON.stringify(data));
-
-                    setExams(prev => prev.map(e =>
-                        e.id === examId
-                            ? { ...e, enrolled: exam.students.find(s => s.name === studentName)?.enrolled }
-                            : e
-                    ));
-                    break;
-                }
-            }
+    const openSeatPicker = async (exam) => {
+        try {
+            const res = await apiClient.get(`/api/exam/${exam.id}/available-seats`);
+            setSeatModal({
+                examId: exam.id,
+                examName: exam.subject,
+                seats: res.data.availableSeats || []
+            });
+            setSelectedSeatId(null);
+        } catch {
+            alert("Failed to load available seats");
         }
     };
 
-    const enrolledCount = exams.filter(e => e.enrolled).length;
+    const confirmEnroll = async () => {
+        if (!selectedSeatId) return;
+        setSeatLoading(true);
+        try {
+            await apiClient.post(`/api/exam/${seatModal.examId}/enroll`, { seatId: selectedSeatId });
+            fetchMySeats();
+            setSeatModal(null);
+        } catch (err) {
+            const msg = err.response?.data?.error || "Failed to enroll";
+            alert(msg);
+        } finally {
+            setSeatLoading(false);
+        }
+    };
 
+    const handleUnenroll = async (examId) => {
+        try {
+            await apiClient.delete(`/api/exam/${examId}/enroll`);
+            fetchMySeats();
+        } catch {
+            alert("Failed to unenroll from exam");
+        }
+    };
+
+    
     return (
         <div className="canvas">
             <div className="orb orb-1"></div>
@@ -137,7 +150,11 @@ export function StudentDashboard() {
                     >
                         📅 Schedule
                     </div>
-
+                    <div className={`nav-pill ${activeNav === "seats" ? "active" : ""}`}
+                    onClick={() => setActiveNav("seats")}
+                     >
+                          🪑 My Seats
+                         </div>
                     <div
                         className="nav-pill"
                         style={{ marginTop: "auto" }}
@@ -167,7 +184,7 @@ export function StudentDashboard() {
                                     <span>Available</span>
                                 </div>
                                 <div className="mini-stat">
-                                    <strong>{enrolledCount}</strong>
+                                    <strong>{enrolledExamIds.size}</strong>
                                     <span>Enrolled</span>
                                 </div>
                                 <div className="mini-stat">
@@ -198,52 +215,49 @@ export function StudentDashboard() {
                                             <th style={{ padding: "10px", textAlign: "left" }}>Exam</th>
                                             <th style={{ textAlign: "center" }}>Date & Time</th>
                                             <th style={{ textAlign: "center" }}>Status</th>
-                                            <th style={{ textAlign: "center" }}>Enrollment</th>
+                                            <th style={{ textAlign: "center" }}>Room</th>
                                             <th style={{ textAlign: "center" }}>Action</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {exams.map((exam) => (
-                                            <tr key={exam.id} style={{
-                                                background: "white",
-                                                borderRadius: "12px",
-                                                boxShadow: "0 4px 12px rgba(0,0,0,0.05)"
-                                            }}>
-                                                <td style={{ padding: "12px", fontWeight: "600" }}>{exam.name}</td>
-                                                <td style={{ textAlign: "center" }}>
-                                                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-                                                        <span>{exam.date}</span>
-                                                        <span style={{ fontSize: "0.75rem", opacity: 0.6 }}>{exam.time}</span>
-                                                    </div>
-                                                </td>
-                                                <td style={{ textAlign: "center" }}>
-                                                    <span style={{
-                                                        background: "#eafaf1", color: "#27ae60",
-                                                        padding: "4px 10px", borderRadius: "8px", fontSize: "0.75rem"
-                                                    }}>
-                                                        {exam.status}
-                                                    </span>
-                                                </td>
-                                                <td style={{ textAlign: "center" }}>
-                                                    <span style={{
-                                                        background: exam.enrolled ? "#eafaf1" : "#fdf0f0",
-                                                        color: exam.enrolled ? "#27ae60" : "#e74c3c",
-                                                        padding: "4px 12px", borderRadius: "8px",
-                                                        fontSize: "0.75rem", fontWeight: "600"
-                                                    }}>
-                                                        {exam.enrolled ? "✓ Enrolled" : "✗ Not enrolled"}
-                                                    </span>
-                                                </td>
-                                                <td style={{ textAlign: "center", padding: "12px" }}>
-                                                    <button
-                                                        className={`table-btn ${exam.enrolled ? "danger" : "primary"}`}
-                                                        onClick={() => toggleEnroll(exam.id)}
-                                                    >
-                                                        {exam.enrolled ? "Unenroll" : "Enroll"}
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        ))}
+                                        {exams.map((exam) => {
+                                            const enrolled = enrolledExamIds.has(exam.id);
+                                            return (
+                                                <tr key={exam.id} style={{ background: "white", borderRadius: "12px", boxShadow: "0 4px 12px rgba(0,0,0,0.05)" }}>
+                                                    <td style={{ padding: "12px", fontWeight: "600" }}>{exam.subject}</td>
+                                                    <td style={{ textAlign: "center" }}>
+                                                        <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+                                                            <span>{new Date(exam.startTime).toLocaleDateString()}</span>
+                                                            <span style={{ fontSize: "0.75rem", opacity: 0.6 }}>{new Date(exam.startTime).toLocaleTimeString()}</span>
+                                                        </div>
+                                                    </td>
+                                                    <td style={{ textAlign: "center" }}>
+                                                        <span style={{ background: enrolled ? "#eafaf1" : "#fff8e1", color: enrolled ? "#27ae60" : "#f39c12", padding: "4px 10px", borderRadius: "8px", fontSize: "0.75rem" }}>
+                                                            {enrolled ? "Enrolled" : "Scheduled"}
+                                                        </span>
+                                                    </td>
+                                                    <td style={{ textAlign: "center" }}>{exam.room?.name || "—"}</td>
+                                                    <td style={{ textAlign: "center" }}>
+                                                        {enrolled ? (
+                                                            <button
+                                                                onClick={() => handleUnenroll(exam.id)}
+                                                                style={{ background: "#ffe0e0", color: "#e74c3c", border: "none", padding: "6px 14px", borderRadius: "8px", cursor: "pointer", fontWeight: "600", fontSize: "0.8rem" }}
+                                                            >
+                                                                Unenroll
+                                                            </button>
+                                                        ) : (
+                                                            <button
+                                                                onClick={() => openSeatPicker(exam)}
+                                                                style={{ background: "#e8f5e9", color: "#27ae60", border: "none", padding: "6px 14px", borderRadius: "8px", cursor: "pointer", fontWeight: "600", fontSize: "0.8rem" }}
+                                                            >
+                                                                Enroll
+                                                            </button>
+                                                        )}
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+
                                     </tbody>
                                 </table>
                             )}
@@ -300,8 +314,118 @@ export function StudentDashboard() {
                         </div>
                     )}
 
+                    
+                      {/* MY SEATS */}
+                      {activeNav === "seats" && (
+                          <div className="hub-card" style={{
+                              flexDirection: "column",
+                              alignItems: "flex-start",
+                              padding: "24px",
+                              marginTop: "20px"
+                          }}>
+                              <h2 style={{ marginBottom: "16px", fontWeight: "700" }}>🪑 My Seat Assignments</h2>
+
+                              {mySeats.length === 0 ? (
+                                  <p style={{ opacity: 0.5, padding: "20px 0" }}>No seat assignments yet.</p>
+                              ) : (
+                                  <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: "0 8px" }}>
+                                      <thead>
+                                          <tr style={{ opacity: 0.6 }}>
+                                              <th style={{ padding: "10px", textAlign: "left" }}>Exam</th>
+                                              <th style={{ textAlign: "center" }}>Date</th>
+                                              <th style={{ textAlign: "center" }}>Room</th>
+                                              <th style={{ textAlign: "center" }}>Seat</th>
+                                          </tr>
+                                      </thead>
+                                      <tbody>
+                                          {mySeats.map((s) => (
+                                              <tr key={s.examId} style={{ background: "white", borderRadius: "12px", boxShadow: "0 4px 12px rgba(0,0,0,0.05)" }}>
+                                                  <td style={{ padding: "12px", fontWeight: "600" }}>{s.subject}</td>
+                                                  <td style={{ textAlign: "center" }}>{new Date(s.examDate).toLocaleString()}</td>
+                                                  <td style={{ textAlign: "center" }}>{s.roomName || "—"}</td>
+                                                  <td style={{ textAlign: "center" }}>
+                                                      {s.seatNumber != null ? (
+                                                          <span style={{ background: "#eafaf1", color: "#27ae60", padding: "4px 12px", borderRadius: "8px", fontWeight: "700" }}>
+                                                              Seat {s.seatNumber}
+                                                          </span>
+                                                      ) : (
+                                                          <span style={{ background: "#fff8e1", color: "#f39c12", padding: "4px 12px", borderRadius: "8px", fontSize: "0.75rem" }}>
+                                                              Pending allocation
+                                                          </span>
+                                                      )}
+                                                  </td>
+                                              </tr>
+                                          ))}
+                                      </tbody>
+                                  </table>
+                              )}
+                          </div>
+                      )}
                 </div>
             </div>
+
+            {/* SEAT PICKER MODAL */}
+            {seatModal && (
+                <div style={{
+                    position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)",
+                    display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000
+                }}>
+                    <div style={{
+                        background: "white", borderRadius: "20px", padding: "32px",
+                        width: "480px", maxWidth: "90vw", maxHeight: "80vh", overflowY: "auto",
+                        boxShadow: "0 20px 60px rgba(0,0,0,0.3)"
+                    }}>
+                        <h2 style={{ marginBottom: "6px", fontWeight: "700" }}>Pick Your Seat</h2>
+                        <p style={{ opacity: 0.6, marginBottom: "24px", fontSize: "0.9rem" }}>{seatModal.examName}</p>
+
+                        {seatModal.seats.length === 0 ? (
+                            <p style={{ opacity: 0.5, textAlign: "center", padding: "20px 0" }}>No available seats for this exam.</p>
+                        ) : (
+                            <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: "10px", marginBottom: "24px" }}>
+                                {seatModal.seats.map(seat => (
+                                    <button
+                                        key={seat.seatId}
+                                        onClick={() => setSelectedSeatId(seat.seatId)}
+                                        style={{
+                                            padding: "12px 0",
+                                            borderRadius: "10px",
+                                            border: selectedSeatId === seat.seatId ? "2px solid #6c63ff" : "2px solid #e0e0e0",
+                                            background: selectedSeatId === seat.seatId ? "#f0eeff" : "white",
+                                            color: selectedSeatId === seat.seatId ? "#6c63ff" : "#333",
+                                            fontWeight: "700",
+                                            fontSize: "0.9rem",
+                                            cursor: "pointer",
+                                            transition: "all 0.15s"
+                                        }}
+                                    >
+                                        {seat.seatNumber}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+
+                        <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}>
+                            <button
+                                onClick={() => setSeatModal(null)}
+                                style={{ padding: "10px 20px", borderRadius: "10px", border: "1px solid #ddd", background: "white", cursor: "pointer", fontWeight: "600" }}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={confirmEnroll}
+                                disabled={!selectedSeatId || seatLoading}
+                                style={{
+                                    padding: "10px 24px", borderRadius: "10px", border: "none",
+                                    background: selectedSeatId ? "#6c63ff" : "#ccc",
+                                    color: "white", fontWeight: "700", cursor: selectedSeatId ? "pointer" : "not-allowed"
+                                }}
+                            >
+                                {seatLoading ? "Enrolling..." : "Confirm"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
