@@ -130,12 +130,24 @@ public class ExamService : IExamService
             .FirstOrDefaultAsync(e => e.Id == id);
     }
 
-    public async Task<Exam> CreateExam(Exam exam)
-    {
-        _context.Exams.Add(exam);
-        await _context.SaveChangesAsync();
-        return exam;
-    }
+   public async Task<Exam> CreateExam(Exam exam)
+   {
+
+       var conflict = await _context.Exams.AnyAsync(e =>
+           e.RoomId == exam.RoomId &&
+           e.StartTime < exam.EndTime &&
+           e.EndTime > exam.StartTime
+       );
+
+       if (conflict)
+       {
+           throw new InvalidOperationException("Room is already occupied in this time range!");
+       }
+
+       _context.Exams.Add(exam);
+       await _context.SaveChangesAsync();
+       return exam;
+   }
 
     public async Task<List<Seat>> GetAvailableSeats(int examId)
     {
@@ -165,28 +177,51 @@ public class ExamService : IExamService
       await _context.SaveChangesAsync();
       return true;
   }
-  public async Task EnrollStudent(int examId, int studentId, int? seatId = null)
-  {
-      var already = await _context.ExamAssignments
-          .AnyAsync(ea => ea.ExamId == examId && ea.UserId == studentId);
-      if (already) return;
+public async Task EnrollStudent(int examId, int studentId, int? seatId = null)
+{
+    var exam = await _context.Exams.FindAsync(examId);
 
-      if (seatId.HasValue)
-      {
-          var seatTaken = await _context.ExamAssignments
-              .AnyAsync(ea => ea.ExamId == examId && ea.SeatId == seatId);
-          if (seatTaken)
-              throw new InvalidOperationException("That seat is already taken. Please choose another.");
-      }
+    if (exam == null)
+        throw new InvalidOperationException("Exam not found");
 
-      _context.ExamAssignments.Add(new ExamAssignment
-      {
-          ExamId = examId,
-          UserId = studentId,
-          SeatId = seatId
-      });
-      await _context.SaveChangesAsync();
-  }
+    //  DUPLI ENROLL
+    var already = await _context.ExamAssignments
+        .AnyAsync(ea => ea.ExamId == examId && ea.UserId == studentId);
+
+    if (already)
+        throw new InvalidOperationException("Already enrolled in this exam!");
+
+    //  STUDENT TIME CONFLICT
+    var hasConflict = await _context.ExamAssignments
+        .Include(a => a.Exam)
+        .AnyAsync(a =>
+            a.UserId == studentId &&
+            a.Exam.StartTime < exam.EndTime &&
+            a.Exam.EndTime > exam.StartTime
+        );
+
+    if (hasConflict)
+        throw new InvalidOperationException("You already have an exam at this time!");
+
+    //  SEAT VALIDATION
+    if (seatId.HasValue)
+    {
+        var seatTaken = await _context.ExamAssignments
+            .AnyAsync(ea => ea.ExamId == examId && ea.SeatId == seatId);
+
+        if (seatTaken)
+            throw new InvalidOperationException("That seat is already taken. Please choose another.");
+    }
+
+    _context.ExamAssignments.Add(new ExamAssignment
+    {
+        ExamId = examId,
+        UserId = studentId,
+        SeatId = seatId
+    });
+
+    await _context.SaveChangesAsync();
+}
 
   public async Task UnenrollStudent(int examId, int studentId)
   {
