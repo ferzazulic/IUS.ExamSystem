@@ -4,8 +4,7 @@ using IUS.ExamSystem.Infrastructure.Auth;
 using IUS.ExamSystem.Infrastructure.Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
+using Microsoft.Identity.Web;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -17,7 +16,6 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
 
 builder.Services.AddScoped<IUserService, UserService>();
-builder.Services.AddScoped<JwtService>();
 
 builder.Services.AddScoped<IExamService, ExamService>();
 builder.Services.AddScoped<IConflictDetectionService, ConflictDetectionService>();
@@ -25,19 +23,7 @@ builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<IRoomService, RoomService>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuerSigningKey = true,
-            ValidateIssuer = true, // Postavi na true ako želiš veću sigurnost
-            ValidateAudience = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"],
-            ValidAudience = builder.Configuration["Jwt:Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
-        };
-    });
+    .AddMicrosoftIdentityWebApi(builder.Configuration.GetSection("AzureAd"));
 
 builder.Services.AddAuthorization();
 builder.Services.AddCors(options =>
