@@ -1,0 +1,67 @@
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    platform: linux/amd64
+    container_name: exam_sqlserver
+    restart: unless-stopped
+    environment:
+      ACCEPT_EULA: Y
+      SA_PASSWORD: Password1!
+    ports:
+      - "1434:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P Password1! -Q 'SELECT 1'"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - exam-network
+
+  api:
+    build:
+      context: ./IUS.ExamSystem.API
+      dockerfile: Dockerfile
+    platform: linux/amd64
+    container_name: exam_api
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultConnection=Server=sqlserver,1433;Database=IUS_ExamSystem;User Id=sa;Password=Password1!;TrustServerCertificate=True;Encrypt=False;
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    networks:
+      - exam-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    platform: linux/amd64
+    container_name: exam_frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      - api
+    networks:
+      - exam-network
+
+volumes:
+  sqlserver_data:
+    driver: local
+
+networks:
+  exam-network:
+    driver: bridge
+
+
+
+
+    

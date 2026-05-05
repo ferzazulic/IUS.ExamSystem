@@ -15,5 +15,7 @@ public class ExamAssignment
 
     public decimal? Score { get; set; }
     public decimal? Grade { get; set; }
+    public string? Feedback { get; set; }
+    public DateTime? FeedbackSubmittedAt { get; set; }
     public DateTime? CompletedAt { get; set; }
 }

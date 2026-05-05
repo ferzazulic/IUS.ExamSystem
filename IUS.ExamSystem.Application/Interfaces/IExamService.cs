@@ -13,5 +13,6 @@ public interface IExamService
     Task<bool> DeleteExam(int id);
     Task EnrollStudent(int examId, int studentId, int? seatId = null);
     Task UnenrollStudent(int examId, int studentId);
+    Task SubmitExamFeedback(int examId, int studentId, string feedback);
     Task<List<ExamAssignment>> GetStudentAssignments(int studentId);
 }

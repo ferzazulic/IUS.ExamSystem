@@ -181,7 +181,9 @@ public class ExamController : ControllerBase
             subject = a.Exam.Subject,
             examDate = a.Exam.StartTime,
             roomName = a.Exam.Room?.Name,
-            seatNumber = a.SeatId.HasValue ? a.Seat?.Number : (int?)null
+            seatNumber = a.SeatId.HasValue ? a.Seat?.Number : (int?)null,
+            feedback = a.Feedback,
+            feedbackSubmittedAt = a.FeedbackSubmittedAt
         }));
     }
 
@@ -211,6 +213,32 @@ public class ExamController : ControllerBase
         await _service.UnenrollStudent(examId, int.Parse(userIdClaim));
         return Ok(new { message = "Unenrolled successfully" });
     }
+
+    [HttpPost("{examId:int}/feedback")]
+    [Authorize(Roles = "Student")]
+    public async Task<IActionResult> SubmitFeedback(int examId, [FromBody] SubmitExamFeedbackRequest request)
+    {
+        if (request == null || string.IsNullOrWhiteSpace(request.Feedback))
+            return BadRequest(new { error = "Feedback text is required." });
+
+        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (userIdClaim == null) return Unauthorized();
+
+        try
+        {
+            await _service.SubmitExamFeedback(examId, int.Parse(userIdClaim), request.Feedback);
+            return Ok(new { message = "Feedback submitted successfully" });
+        }
+        catch (ArgumentException ex)
+        {
+            return NotFound(new { error = ex.Message });
+        }
+    }
+}
+
+public class SubmitExamFeedbackRequest
+{
+    public string Feedback { get; set; }
 }
 
 public class AllocateSeatsRequest

@@ -54,7 +54,7 @@ import { useState, useEffect } from "react";
               <div className="orb orb-2"></div>
               <div className="glass-wrapper">
 
-                  {/* SIDEBAR */}
+                  
                   <div className="ultra-sidebar">
                       <div className="brand">
                           <div className="ius-logo">IUS</div>
@@ -83,10 +83,10 @@ import { useState, useEffect } from "react";
                       </div>
                   </div>
 
-                  {/* MAIN */}
+                 
                   <div className="main-stage">
 
-                      {/* OVERVIEW */}
+                      
                       {activeNav === "dashboard" && (
                           <>
                               <h1 style={{ marginBottom: "20px" }}>Admin Dashboard</h1>
@@ -106,7 +106,7 @@ import { useState, useEffect } from "react";
                           </>
                       )}
 
-                      {/* USERS */}
+                      
                       {activeNav === "users" && (
                           <div className="hub-card" style={{ flexDirection: "column", alignItems: "flex-start", padding: "24px" }}>
                               <h2 style={{ marginBottom: "16px", fontWeight: "700" }}>User Management</h2>
@@ -141,7 +141,7 @@ import { useState, useEffect } from "react";
                           </div>
                       )}
 
-                      {/* EXAMS */}
+                      
                       {activeNav === "exams" && (
                           <div className="hub-card" style={{ flexDirection: "column", alignItems: "flex-start", padding: "24px" }}>
                               <h2 style={{ marginBottom: "16px", fontWeight: "700" }}>All Exams</h2>
@@ -171,8 +171,6 @@ import { useState, useEffect } from "react";
                               </table>
                           </div>
                       )}
-
-                      {/* ROOMS */}
                       {activeNav === "rooms" && (
                           <div className="hub-card" style={{ flexDirection: "column", alignItems: "flex-start", padding: "24px" }}>
                               <h2 style={{ marginBottom: "16px", fontWeight: "700" }}>Rooms</h2>

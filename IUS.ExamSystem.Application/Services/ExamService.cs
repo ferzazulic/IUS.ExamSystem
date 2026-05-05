@@ -197,6 +197,18 @@ public class ExamService : IExamService
       await _context.SaveChangesAsync();
   }
 
+  public async Task SubmitExamFeedback(int examId, int studentId, string feedback)
+  {
+      var assignment = await _context.ExamAssignments
+          .FirstOrDefaultAsync(ea => ea.ExamId == examId && ea.UserId == studentId);
+      if (assignment == null)
+          throw new ArgumentException("Exam enrollment not found for this student.");
+
+      assignment.Feedback = feedback;
+      assignment.FeedbackSubmittedAt = DateTime.UtcNow;
+      await _context.SaveChangesAsync();
+  }
+
   public async Task<List<ExamAssignment>> GetStudentAssignments(int studentId)
   {
       return await _context.ExamAssignments
