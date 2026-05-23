@@ -9,13 +9,14 @@ using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.WebHost.UseUrls("http://localhost:5000", "https://localhost:5001");
+//builder.WebHost.UseUrls("http://localhost:5000", "https://localhost:5001");
 
 // Add services to the container
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
 
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<JwtService>();
 
 builder.Services.AddScoped<IExamService, ExamService>();
 builder.Services.AddScoped<IConflictDetectionService, ConflictDetectionService>();
