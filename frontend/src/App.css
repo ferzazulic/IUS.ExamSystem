@@ -2,7 +2,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
 
 :root {
-    --accent: #003366; /* moramo nesto staviti da ne bi bilo bijelo */
+    --accent: #003366;
     --shadow: 0 20px 40px rgba(0,0,0,0.05);
     --white: #ffffff;
     --blur: 20px;

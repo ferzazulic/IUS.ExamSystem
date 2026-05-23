@@ -13,6 +13,9 @@ obj/
 dist/
 build/
 
+## Node
+node_modules/
+
 ## NuGet
 *.nupkg
 *.snupkg
@@ -26,6 +29,17 @@ Migrations/*.Designer.cs
 appsettings.local.json
 appsettings.Development.json
 
+## Environment
+.env
+.env.local
+
+## Logs
+logs/
+*.log
+
+## Docker
+docker-data/
+
 ## OS
 .DS_Store
 Thumbs.db
@@ -34,11 +48,3 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
-
-## Logs
-logs/
-*.log
-
-## Environment
-.env
-.env.local
