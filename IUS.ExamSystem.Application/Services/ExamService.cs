@@ -241,4 +241,63 @@ public async Task EnrollStudent(int examId, int studentId, int? seatId = null)
           .Where(a => a.UserId == studentId)
           .ToListAsync();
   }
+
+  public async Task<List<SeatMapEntry>> GetSeatMap(int examId)
+  {
+      var exam = await _context.Exams
+          .Include(e => e.Room).ThenInclude(r => r.Seats)
+          .Include(e => e.Assignments).ThenInclude(a => a.Student)
+          .FirstOrDefaultAsync(e => e.Id == examId);
+
+      if (exam == null) throw new InvalidOperationException("Exam not found");
+
+      var assignmentBySeat = exam.Assignments
+          .Where(a => a.SeatId.HasValue)
+          .ToDictionary(a => a.SeatId!.Value, a => a);
+
+      return exam.Room.Seats
+          .OrderBy(s => s.Number)
+          .Select(s => new SeatMapEntry(
+              s.Id,
+              s.Number,
+              assignmentBySeat.ContainsKey(s.Id) ? assignmentBySeat[s.Id].UserId : null,
+              assignmentBySeat.ContainsKey(s.Id) ? assignmentBySeat[s.Id].Student?.FullName : null
+          ))
+          .ToList();
+  }
+
+  public async Task AssignSeat(int examId, int studentId, int seatId)
+  {
+      var exam = await _context.Exams.Include(e => e.Room).FirstOrDefaultAsync(e => e.Id == examId);
+      if (exam == null) throw new InvalidOperationException("Exam not found");
+
+      var seat = await _context.Seats.FirstOrDefaultAsync(s => s.Id == seatId && s.RoomId == exam.RoomId);
+      if (seat == null) throw new InvalidOperationException("Seat not found in this exam's room");
+
+      var seatTaken = await _context.ExamAssignments
+          .AnyAsync(ea => ea.ExamId == examId && ea.SeatId == seatId && ea.UserId != studentId);
+      if (seatTaken) throw new InvalidOperationException("That seat is already taken by another student");
+
+      var existing = await _context.ExamAssignments
+          .FirstOrDefaultAsync(ea => ea.ExamId == examId && ea.UserId == studentId);
+
+      if (existing != null)
+          existing.SeatId = seatId;
+      else
+          _context.ExamAssignments.Add(new ExamAssignment { ExamId = examId, UserId = studentId, SeatId = seatId });
+
+      await _context.SaveChangesAsync();
+  }
+
+  public async Task RemoveSeatAssignment(int examId, int seatId)
+  {
+      var assignment = await _context.ExamAssignments
+          .FirstOrDefaultAsync(ea => ea.ExamId == examId && ea.SeatId == seatId);
+
+      if (assignment != null)
+      {
+          _context.ExamAssignments.Remove(assignment);
+          await _context.SaveChangesAsync();
+      }
+  }
 }

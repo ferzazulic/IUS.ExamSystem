@@ -101,7 +101,7 @@ import { useState, useEffect } from "react";
                                           <div className="mini-stat"><strong>{totalStudents}</strong><span>Students</span></div>
                                       </div>
                                   </div>
-                                  <div style={{ fontSize: "4rem" }}>⚙️ </div>
+                                  <div></div>
                               </div>
                           </>
                       )}

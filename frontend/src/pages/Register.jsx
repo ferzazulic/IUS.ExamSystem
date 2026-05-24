@@ -87,7 +87,7 @@ export function Register() {
                     />
 
 <div style={{ display: "flex", gap: "10px", margin: "8px 0" }}>
-      {[{ label: "🎓 Student", value: 2 }, { label: "👨‍🏫 Professor", value: 1 }].map(r => (
+      {[{ label: "Student", value: 2 }, { label: "Professor", value: 1 }].map(r => (
           <button
               key={r.value}
               onClick={() => setRole(r.value)}
@@ -114,12 +114,12 @@ export function Register() {
 
                     <div className="login-divider"></div>
 
-                    <button
-                        className="register-btn"
+                    <p
                         onClick={() => navigate("/login")}
+                        style={{ textAlign: "center", fontSize: "14px", color: "#6c63ff", cursor: "pointer", margin: "0", fontWeight: "600" }}
                     >
-                        Already have an account? Log in
-                    </button>
+                        Already have an account? <span style={{ textDecoration: "underline" }}>Log in</span>
+                    </p>
 
                 </div>
             </div>

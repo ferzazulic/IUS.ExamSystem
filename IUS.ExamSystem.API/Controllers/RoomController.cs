@@ -37,7 +37,7 @@ public class RoomController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,Staff")]
     public async Task<IActionResult> CreateRoom([FromBody] CreateRoomRequest request)
     {
         if (string.IsNullOrWhiteSpace(request?.Name) || request.Capacity <= 0)
@@ -71,7 +71,7 @@ public class RoomController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,Staff")]
     public async Task<IActionResult> UpdateRoom(int id, [FromBody] UpdateRoomRequest request)
     {
         if (string.IsNullOrWhiteSpace(request?.Name) || request.Capacity <= 0)
@@ -95,7 +95,7 @@ public class RoomController : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,Staff")]
     public async Task<IActionResult> DeleteRoom(int id)
     {
         try

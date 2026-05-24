@@ -69,17 +69,42 @@ export function StudentDashboard() {
             .catch(console.error);
     }, []);
 
-    const [seatModal, setSeatModal] = useState(null); // { examId, examName, seats: [] }
+    const [seatModal, setSeatModal] = useState(null); // { examId, examName, seatsPerRow, seatRows }
     const [selectedSeatId, setSelectedSeatId] = useState(null);
     const [seatLoading, setSeatLoading] = useState(false);
 
     const openSeatPicker = async (exam) => {
         try {
             const res = await apiClient.get(`/api/exam/${exam.id}/available-seats`);
+            const totalCapacity = res.data.totalCapacity || 0;
+            const availableSeats = res.data.availableSeats || [];
+            const availableByNumber = {};
+            availableSeats.forEach(s => { availableByNumber[s.seatNumber] = s; });
+
+            const seatsPerRow = totalCapacity >= 150 ? 8 : (totalCapacity > 0 ? Math.ceil(totalCapacity / Math.ceil(Math.sqrt(totalCapacity))) : 6);
+            const allSeats = Array.from({ length: totalCapacity }, (_, i) => {
+                const num = i + 1;
+                const rowLabel = String.fromCharCode(65 + Math.floor(i / seatsPerRow));
+                const col = (i % seatsPerRow) + 1;
+                return {
+                    seatNumber: num,
+                    seatId: availableByNumber[num]?.seatId || null,
+                    available: !!availableByNumber[num],
+                    label: `${rowLabel}${col}`
+                };
+            });
+
+            const seatRows = [];
+            for (let i = 0; i < allSeats.length; i += seatsPerRow) {
+                const rowLabel = String.fromCharCode(65 + Math.floor(i / seatsPerRow));
+                seatRows.push({ label: rowLabel, seats: allSeats.slice(i, i + seatsPerRow) });
+            }
+
             setSeatModal({
                 examId: exam.id,
                 examName: exam.subject,
-                seats: res.data.availableSeats || []
+                seatsPerRow,
+                seatRows
             });
             setSelectedSeatId(null);
         } catch {
@@ -130,30 +155,30 @@ export function StudentDashboard() {
                         className={`nav-pill ${activeNav === "dashboard" ? "active" : ""}`}
                         onClick={() => setActiveNav("dashboard")}
                     >
-                        🏠 Dashboard
+                        Dashboard
                     </div>
                     <div
                         className={`nav-pill ${activeNav === "exams" ? "active" : ""}`}
                         onClick={() => setActiveNav("exams")}
                     >
-                        📋 My Exams
+                        My Exams
                     </div>
                     <div
                         className={`nav-pill ${activeNav === "classes" ? "active" : ""}`}
                         onClick={() => setActiveNav("classes")}
                     >
-                        📚 My Classes
+                        My Classes
                     </div>
                     <div
                         className={`nav-pill ${activeNav === "schedule" ? "active" : ""}`}
                         onClick={() => setActiveNav("schedule")}
                     >
-                        📅 Schedule
+                        Schedule
                     </div>
                     <div className={`nav-pill ${activeNav === "seats" ? "active" : ""}`}
                     onClick={() => setActiveNav("seats")}
                      >
-                          🪑 My Seats
+                          My Seats
                          </div>
                     <div
                         className="nav-pill"
@@ -164,14 +189,14 @@ export function StudentDashboard() {
                             navigate("/login");
                         }}
                     >
-                        🚪 Logout
+                        Logout
                     </div>
                 </div>
 
                 {/* MAIN */}
                 <div className="main-stage">
 
-                    <h1 style={{ marginBottom: "20px" }}>Student Dashboard 🎓</h1>
+                    <h1 style={{ marginBottom: "20px" }}>Student Dashboard</h1>
 
                     {/* HERO */}
                     <div className="dashboard-hero-card">
@@ -193,7 +218,7 @@ export function StudentDashboard() {
                                 </div>
                             </div>
                         </div>
-                        <div style={{ fontSize: "4rem" }}>🎓</div>
+                        <div></div>
                     </div>
 
                     {/* EXAMS SECTION */}
@@ -204,7 +229,7 @@ export function StudentDashboard() {
                             padding: "24px",
                             marginTop: "20px"
                         }}>
-                            <h2 style={{ marginBottom: "16px", fontWeight: "700" }}>📋 Available Exams</h2>
+                            <h2 style={{ marginBottom: "16px", fontWeight: "700" }}>Available Exams</h2>
 
                             {exams.length === 0 ? (
                                 <p style={{ opacity: 0.5, padding: "20px 0" }}>No exams available yet.</p>
@@ -272,7 +297,7 @@ export function StudentDashboard() {
                             padding: "24px",
                             marginTop: "20px"
                         }}>
-                            <h2 style={{ marginBottom: "16px", fontWeight: "700" }}>📚 My Classes</h2>
+                            <h2 style={{ marginBottom: "16px", fontWeight: "700" }}>My Classes</h2>
 
                             <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: "0 8px" }}>
                                 <thead>
@@ -305,7 +330,7 @@ export function StudentDashboard() {
                                                 </span>
                                             </td>
                                             <td style={{ padding: "12px", opacity: 0.75, fontSize: "0.9rem" }}>
-                                                👨‍🏫 {cls.professor}
+                                                {cls.professor}
                                             </td>
                                         </tr>
                                     ))}
@@ -323,7 +348,7 @@ export function StudentDashboard() {
                               padding: "24px",
                               marginTop: "20px"
                           }}>
-                              <h2 style={{ marginBottom: "16px", fontWeight: "700" }}>🪑 My Seat Assignments</h2>
+                              <h2 style={{ marginBottom: "16px", fontWeight: "700" }}>My Seat Assignments</h2>
 
                               {mySeats.length === 0 ? (
                                   <p style={{ opacity: 0.5, padding: "20px 0" }}>No seat assignments yet.</p>
@@ -376,30 +401,59 @@ export function StudentDashboard() {
                         boxShadow: "0 20px 60px rgba(0,0,0,0.3)"
                     }}>
                         <h2 style={{ marginBottom: "6px", fontWeight: "700" }}>Pick Your Seat</h2>
-                        <p style={{ opacity: 0.6, marginBottom: "24px", fontSize: "0.9rem" }}>{seatModal.examName}</p>
+                        <p style={{ opacity: 0.6, marginBottom: "16px", fontSize: "0.9rem" }}>{seatModal.examName}</p>
 
-                        {seatModal.seats.length === 0 ? (
-                            <p style={{ opacity: 0.5, textAlign: "center", padding: "20px 0" }}>No available seats for this exam.</p>
+                        <div style={{ display: "flex", gap: "12px", marginBottom: "16px", fontSize: "12px" }}>
+                            <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                                <span style={{ width: "12px", height: "12px", borderRadius: "3px", background: "#1a3a6b", border: "2px solid #1a3a6b", display: "inline-block" }} /> Selected
+                            </span>
+                            <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                                <span style={{ width: "12px", height: "12px", borderRadius: "3px", background: "#e8f0fe", border: "2px solid #1a73e8", display: "inline-block" }} /> Available
+                            </span>
+                            <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                                <span style={{ width: "12px", height: "12px", borderRadius: "3px", background: "#f5f5f5", border: "2px solid #ccc", display: "inline-block" }} /> Taken
+                            </span>
+                        </div>
+
+                        {seatModal.seatRows.length === 0 ? (
+                            <p style={{ opacity: 0.5, textAlign: "center", padding: "20px 0" }}>No seats available for this exam.</p>
                         ) : (
-                            <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: "10px", marginBottom: "24px" }}>
-                                {seatModal.seats.map(seat => (
-                                    <button
-                                        key={seat.seatId}
-                                        onClick={() => setSelectedSeatId(seat.seatId)}
-                                        style={{
-                                            padding: "12px 0",
-                                            borderRadius: "10px",
-                                            border: selectedSeatId === seat.seatId ? "2px solid #6c63ff" : "2px solid #e0e0e0",
-                                            background: selectedSeatId === seat.seatId ? "#f0eeff" : "white",
-                                            color: selectedSeatId === seat.seatId ? "#6c63ff" : "#333",
-                                            fontWeight: "700",
-                                            fontSize: "0.9rem",
-                                            cursor: "pointer",
-                                            transition: "all 0.15s"
-                                        }}
-                                    >
-                                        {seat.seatNumber}
-                                    </button>
+                            <div style={{ marginBottom: "24px", overflowX: "auto" }}>
+                                {/* Column header */}
+                                <div style={{ display: "flex", gap: "6px", marginBottom: "4px", marginLeft: "24px" }}>
+                                    {Array.from({ length: seatModal.seatsPerRow }, (_, i) => (
+                                        <div key={i} style={{ width: "40px", textAlign: "center", fontSize: "10px", fontWeight: "700", opacity: 0.4 }}>{i + 1}</div>
+                                    ))}
+                                </div>
+                                {seatModal.seatRows.map(({ label, seats }) => (
+                                    <div key={label} style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "6px" }}>
+                                        <div style={{ width: "18px", fontWeight: "700", fontSize: "12px", color: "#6c63ff" }}>{label}</div>
+                                        {seats.map(seat => (
+                                            <button
+                                                key={seat.seatNumber}
+                                                disabled={!seat.available}
+                                                onClick={() => seat.available && setSelectedSeatId(seat.seatId)}
+                                                style={{
+                                                    width: "40px", height: "40px",
+                                                    borderRadius: "8px",
+                                                    border: (seat.seatId !== null && selectedSeatId === seat.seatId)
+                                                        ? "2px solid #1a3a6b"
+                                                        : seat.available ? "2px solid #1a73e8" : "2px solid #ccc",
+                                                    background: (seat.seatId !== null && selectedSeatId === seat.seatId)
+                                                        ? "#1a3a6b"
+                                                        : seat.available ? "#e8f0fe" : "#f5f5f5",
+                                                    color: (seat.seatId !== null && selectedSeatId === seat.seatId)
+                                                        ? "white"
+                                                        : seat.available ? "#1a73e8" : "#bbb",
+                                                    fontWeight: "700", fontSize: "11px",
+                                                    cursor: seat.available ? "pointer" : "not-allowed",
+                                                    transition: "all 0.15s"
+                                                }}
+                                            >
+                                                {seat.label}
+                                            </button>
+                                        ))}
+                                    </div>
                                 ))}
                             </div>
                         )}

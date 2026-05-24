@@ -31,23 +31,23 @@ import { useNavigate } from "react-router-dom";
                           <strong>Exam System</strong>
                       </div>
 
-                      <div className="nav-pill active">🏠 Dashboard</div>
-                      <div className="nav-pill" onClick={() => navigate("/exams")}>📝 Exams</div>
-                      <div className="nav-pill" onClick={() => navigate("/courses")}>📚 Courses</div>
-                      <div className="nav-pill" onClick={() => navigate("/seats")}>🪑 Seat Allocation</div>
-                      <div className="nav-pill" onClick={() => navigate("/rooms")}>🏫 Rooms</div>
+                      <div className="nav-pill active">Dashboard</div>
+                      <div className="nav-pill" onClick={() => navigate("/exams")}>Exams</div>
+                      <div className="nav-pill" onClick={() => navigate("/courses")}>Courses</div>
+                      <div className="nav-pill" onClick={() => navigate("/seats")}>Seat Allocation</div>
+                      <div className="nav-pill" onClick={() => navigate("/rooms")}>Rooms</div>
 
                       <div className="nav-pill" style={{ marginTop: "auto" }} onClick={() => {
                           localStorage.removeItem("token");
                           localStorage.removeItem("role");
                           navigate("/login");
                       }}>
-                          🚪 Logout
+                          Logout
                       </div>
                   </div>
 
                   <div className="main-stage">
-                      <h1 style={{ marginBottom: "20px" }}>Professor Dashboard 📊</h1>
+                      <h1 style={{ marginBottom: "20px" }}>Professor Dashboard</h1>
 
                       <div className="dashboard-hero-card">
                           <div>
@@ -59,7 +59,7 @@ import { useNavigate } from "react-router-dom";
                                   <div className="mini-stat"><strong>{courses.length}</strong><span>Courses</span></div>
                               </div>
                           </div>
-                          <div style={{ fontSize: "4rem" }}>📊</div>
+                          <div></div>
                       </div>
                   </div>
               </div>

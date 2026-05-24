@@ -202,6 +202,58 @@ public class ExamController : ControllerBase
         }
     }
 
+    [HttpGet("{examId:int}/seat-map")]
+    [Authorize(Roles = "Admin,Staff")]
+    public async Task<IActionResult> GetSeatMap(int examId)
+    {
+        try
+        {
+            var seats = await _service.GetSeatMap(examId);
+            var exam = await _service.GetExamById(examId);
+            return Ok(new
+            {
+                examId,
+                roomName = exam?.Room?.Name,
+                capacity = exam?.Room?.Capacity ?? 0,
+                seats
+            });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
+
+    [HttpPost("{examId:int}/assign-seat")]
+    [Authorize(Roles = "Admin,Staff")]
+    public async Task<IActionResult> AssignSeat(int examId, [FromBody] AssignSeatRequest request)
+    {
+        try
+        {
+            await _service.AssignSeat(examId, request.StudentId, request.SeatId);
+            return Ok(new { message = "Seat assigned successfully" });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
+
+    [HttpDelete("{examId:int}/seat/{seatId:int}")]
+    [Authorize(Roles = "Admin,Staff")]
+    public async Task<IActionResult> RemoveSeatAssignment(int examId, int seatId)
+    {
+        try
+        {
+            await _service.RemoveSeatAssignment(examId, seatId);
+            return Ok(new { message = "Seat assignment removed" });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
+
     [HttpDelete("{examId:int}/enroll")]
     [Authorize(Roles = "Student")]
     public async Task<IActionResult> Unenroll(int examId)
@@ -235,4 +287,10 @@ public class CreateExamRequest
 public class EnrollRequest
 {
     public int? SeatId { get; set; }
+}
+
+public class AssignSeatRequest
+{
+    public int StudentId { get; set; }
+    public int SeatId { get; set; }
 }

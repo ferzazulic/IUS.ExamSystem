@@ -14,4 +14,9 @@ public interface IExamService
     Task EnrollStudent(int examId, int studentId, int? seatId = null);
     Task UnenrollStudent(int examId, int studentId);
     Task<List<ExamAssignment>> GetStudentAssignments(int studentId);
+    Task<List<SeatMapEntry>> GetSeatMap(int examId);
+    Task AssignSeat(int examId, int studentId, int seatId);
+    Task RemoveSeatAssignment(int examId, int seatId);
 }
+
+public record SeatMapEntry(int SeatId, int SeatNumber, int? StudentId, string? StudentName);

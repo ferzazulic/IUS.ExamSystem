@@ -34,7 +34,14 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login(LoginRequest request)
     {
-        var token = await _userService.Login(request.Email, request.Password);
-        return Ok(new { token });
+        try
+        {
+            var token = await _userService.Login(request.Email, request.Password);
+            return Ok(new { token });
+        }
+        catch
+        {
+            return Unauthorized(new { error = "Invalid email or password" });
+        }
     }
 }
