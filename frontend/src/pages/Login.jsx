@@ -1,14 +1,89 @@
 import { useState } from "react";
-import apiClient from "../api/apiClient";
 import logo from "../assets/iuslogo.png";
 import { useNavigate } from "react-router-dom";
+import { useMsal } from "@azure/msal-react";
+import { loginRequest, msalConfig } from "../msalConfig.js";
+import apiClient from "../api/apiClient.js";
 
 export function Login() {
-     const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-
+    const [error, setError] = useState(() => {
+        const storedError = localStorage.getItem("authError");
+        if (storedError) {
+            localStorage.removeItem("authError");
+            return "Login failed: " + storedError;
+        }
+        return "";
+    });
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [loading, setLoading] = useState(false);
+    const { instance } = useMsal();
     const navigate = useNavigate();
+
+    
+
+    const handleLogin = async () => {
+        setError("");
+        console.log("handleLogin start", { instance, redirectUri: msalConfig.auth.redirectUri });
+        try {
+            if (!instance || typeof instance.loginRedirect !== "function") {
+                throw new Error("MSAL instance not ready or loginRedirect missing");
+            }
+
+            const scopes = ["openid", "profile", ...loginRequest.scopes];
+            console.log("calling loginRedirect", scopes);
+            await instance.loginRedirect({
+                ...loginRequest,
+                scopes,
+                redirectUri: msalConfig.auth.redirectUri,
+            });
+            console.log("loginRedirect returned");
+        } catch (err) {
+            console.error("handleLogin error", err);
+            const message = err?.message || err?.errorMessage || "Login failed.";
+            setError("Login failed: " + message);
+        }
+    };
+
+    const handleEmailPasswordLogin = async (e) => {
+        e.preventDefault();
+        setError("");
+        setLoading(true);
+        try {
+            const response = await apiClient.post("/api/auth/login", {
+                email,
+                password,
+            });
+
+            const jwtToken = response.data.token;
+            localStorage.setItem("token", jwtToken);
+
+            // Decode JWT to get role and userId
+            const payload = JSON.parse(atob(jwtToken.split(".")[1]));
+            const role = payload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] || 
+                         payload.role || 
+                         "Student";
+            const userId = payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"] || 
+                           payload.sub;
+
+            localStorage.setItem("role", role);
+            localStorage.setItem("userId", userId);
+
+            if (role === "Admin") {
+                navigate("/admin-dashboard");
+            } else if (role === "Staff") {
+                navigate("/dashboard");
+            } else {
+                navigate("/student-dashboard");
+            }
+        } catch (err) {
+            const message = err.response?.data?.message || err.message || "Login failed";
+            setError(message);
+            console.error("Login error", err);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
         <div className="canvas page-transition">
@@ -22,65 +97,70 @@ export function Login() {
                 <img src={logo} alt="IUS logo" className="login-logo-img" />
 
                 <div className="login-card view-fade-in">
-
                     <h2 className="login-title">Welcome back</h2>
                     <p className="login-sub">Sign in to continue</p>
 
-                    <input
-                        className="login-input"
-                        placeholder=" Email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                    />
+                    <form onSubmit={handleEmailPasswordLogin}>
+                        <input
+                            type="email"
+                            placeholder="Email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            required
+                            style={{
+                                width: "100%",
+                                padding: "10px",
+                                marginBottom: "10px",
+                                borderRadius: "8px",
+                                border: "1px solid #ccc",
+                                fontSize: "14px",
+                            }}
+                        />
+                        <input
+                            type="password"
+                            placeholder="Password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                            style={{
+                                width: "100%",
+                                padding: "10px",
+                                marginBottom: "10px",
+                                borderRadius: "8px",
+                                border: "1px solid #ccc",
+                                fontSize: "14px",
+                                boxSizing: "border-box",
+                            }}
+                        />
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="login-btn"
+                            style={{ marginBottom: "10px" }}
+                        >
+                            {loading ? "Logging in..." : "Sign in"}
+                        </button>
+                    </form>
 
-                    <input
-                        className="login-input"
-                        type="password"
-                        placeholder=" Password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                    />
+                    <div className="login-divider"></div>
 
-                    <button
-      className="login-btn"
-      onClick={async () => {
-          if (!email || !password) return;
-          setError("");
-          try {
-              const res = await apiClient.post("/api/Auth/login", { email, password });
-              const token = res.data.token;
-              const payload = JSON.parse(atob(token.split(".")[1]));
-              const role = payload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
-              const userId = payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"];
-              localStorage.setItem("token", token);
-              localStorage.setItem("role", role);
-              localStorage.setItem("userId", userId);
-              if (role === "Admin") {
-                 navigate("/admin-dashboard");
-                } else if (role === "Staff") {
-                    navigate("/dashboard");
-              } else {
-                  navigate("/student-dashboard");
-              }
-          } catch {
-              setError("Invalid email or password");
-          }
-      }}
-  >
-      Log in
-  </button>
-{error && <p style={{ color: "red", fontSize: "14px", margin: "4px 0" }}>{error}</p>}
+                    <button type="button" className="login-btn" onClick={handleLogin}>
+                        Log in with Azure AD
+                    </button>
+
+                    {error && <p style={{ color: "red", fontSize: "14px", margin: "4px 0" }}>{error}</p>}
+
                     <p className="login-forgot">Forgot password?</p>
 
                     <div className="login-divider"></div>
 
                     <button
+                        type="button"
                         className="register-btn"
                         onClick={() => navigate("/register")}
                     >
                         Create new account
                     </button>
-
                 </div>
             </div>
         </div>

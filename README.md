@@ -47,6 +47,8 @@ cd IUS.ExamSystem.API
 dotnet ef database update
 ```
 
+Note: For testing purposes, the application is configured to use an in-memory database. No actual database setup is required.
+
 ## Run
 
 ### Backend
@@ -107,13 +109,17 @@ The frontend runs at `http://localhost:5173` by default.
    - The frontend is configured with the following Azure AD settings:
      - Tenant ID: `2f2dcb5d-f3e1-4f33-8584-dcacd25d604d`
      - Client ID: `562c6df4-0ce8-4165-8969-f300f4c1842a`
+     - Scope URL: `api://562c6df4-0ce8-4165-8969-f300f4c1842a/api_access`
      - Redirect URIs: `http://localhost:5173/auth`, `http://localhost:5173/`, `http://localhost:5173`
-   - Ensure your Azure AD app registration matches these settings.
+   - MSAL packages: `@azure/msal-react` and `@azure/msal-browser` are installed.
+   - Configuration is in `frontend/src/msalConfig.js`.
+   - The app is wrapped with `MsalProvider` in `main.jsx`.
+   - Login uses Azure AD popup authentication.
 
 3. **Login Flow**:
    - Navigate to the frontend.
-   - Click login to authenticate via Azure AD.
-   - Upon successful authentication, the app should receive an access token.
+   - Click "Log in with Azure AD" to authenticate via Azure AD.
+   - Upon successful authentication, the app acquires an access token and stores it in localStorage.
 
 4. **API Integration**:
    - Test that the frontend can call protected API endpoints using the obtained token.

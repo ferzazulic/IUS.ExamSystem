@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: ius-sqlserver
+    environment:
+      ACCEPT_EULA: Y
+      SA_PASSWORD: YourStrong!Passw0rd
+      MSSQL_PID: Express
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+    networks:
+      - ius-network
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ius-backend
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:80
+      ConnectionStrings__Default: "Server=sqlserver,1433;Database=IUS_ExamSystem;User Id=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=True;Encrypt=False;"
+    ports:
+      - "5000:80"
+    depends_on:
+      - sqlserver
+    networks:
+      - ius-network
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: ius-frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+    networks:
+      - ius-network
+    restart: unless-stopped
+
+volumes:
+  sqlserver_data:
+
+networks:
+  ius-network:
+    driver: bridge

@@ -22,6 +22,11 @@ public class UserService : IUserService
 
     public async Task<User> Register(string fullName, string email, string password, Role role)
     {
+        if (await _context.Users.AnyAsync(u => u.Email == email))
+        {
+            throw new Exception("Email already in use.");
+        }
+
         var user = new User
         {
             FullName = fullName,
@@ -43,6 +48,29 @@ public class UserService : IUserService
 
         if (user == null || user.PasswordHash != HashPassword(password))
             throw new Exception("Invalid credentials");
+
+        return _jwtService.GenerateToken(user);
+    }
+
+    public async Task<string> AzureLogin(string email, string fullName, string azureId)
+    {
+        var user = await _context.Users
+            .FirstOrDefaultAsync(u => u.Email == email);
+
+        if (user == null)
+        {
+            // Create new user from Azure AD
+            user = new User
+            {
+                FullName = fullName,
+                Email = email,
+                PasswordHash = HashPassword(azureId), // Use Azure ID as password hash (not used for auth)
+                Role = Role.Student // Default role for new users
+            };
+
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+        }
 
         return _jwtService.GenerateToken(user);
     }

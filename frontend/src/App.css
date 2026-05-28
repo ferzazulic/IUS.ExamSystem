@@ -792,6 +792,7 @@ input:checked + .slider:before { transform: translateX(24px); }
 /* LOGIN DESIGN */
 
 .login-card {
+    position: relative;
     width: 100%;
     max-width: 270px;
     padding: 20px;
@@ -811,6 +812,7 @@ input:checked + .slider:before { transform: translateX(24px); }
 }
 
 .login-title {
+    position: relative;
     margin: 0;
     justify-content: center;
     font-size: 1.4rem;

@@ -1,0 +1,8 @@
+node_modules
+.git
+.history
+*.md
+test-backend.ps1
+frontend/node_modules
+frontend/.git
+frontend/dist

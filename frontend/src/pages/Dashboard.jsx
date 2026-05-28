@@ -5,19 +5,18 @@ import { useNavigate } from "react-router-dom";
   export function Dashboard() {
       const navigate = useNavigate();
 
-      useEffect(() => {
-          if (!localStorage.getItem("token")) navigate("/login");
-      }, []);
+    useEffect(() => {
+        if (!localStorage.getItem("token")) navigate("/login");
+    }, [navigate]);
 
-      const [examCount, setExamCount] = useState(0);
-      const [roomCount, setRoomCount] = useState(0);
-      const [courses, setCourses] = useState([]);
+    const [examCount, setExamCount] = useState(0);
+    const [roomCount, setRoomCount] = useState(0);
+    const [courses, _setCourses] = useState(() => JSON.parse(localStorage.getItem("courses")) || []);
 
-      useEffect(() => {
-          apiClient.get("/api/exam").then(res => setExamCount(res.data.exams?.length || 0)).catch(console.error);
-          apiClient.get("/api/room").then(res => setRoomCount(res.data?.length || 0)).catch(console.error);
-          setCourses(JSON.parse(localStorage.getItem("courses")) || []);
-      }, []);
+    useEffect(() => {
+        apiClient.get("/api/exam").then(res => setExamCount(res.data.exams?.length || 0)).catch(console.error);
+        apiClient.get("/api/room").then(res => setRoomCount(res.data?.length || 0)).catch(console.error);
+    }, []);
 
       return (
           <div className="canvas">

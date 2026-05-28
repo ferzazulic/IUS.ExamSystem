@@ -5,9 +5,9 @@ import { useState, useEffect } from "react";
   export function Exams() {
       const navigate = useNavigate();
 
-      const [rooms, setRooms] = useState([]);
-      const [exams, setExams] = useState([]);
-      const [courses, setCourses] = useState([]);
+        const [rooms, setRooms] = useState([]);
+        const [exams, setExams] = useState([]);
+        const [courses, _setCourses] = useState(() => JSON.parse(localStorage.getItem("courses")) || []);
 
       const [selectedCourse, setSelectedCourse] = useState("");
       const [selectedRoom, setSelectedRoom] = useState("");
@@ -15,13 +15,10 @@ import { useState, useEffect } from "react";
       const [startTime, setStartTime] = useState("");
       const [endTime, setEndTime] = useState("");
 
-      useEffect(() => {
-          const storedCourses = JSON.parse(localStorage.getItem("courses")) || [];
-          setCourses(storedCourses);
-
-          apiClient.get("/api/room").then(res => setRooms(res.data)).catch(console.error);
-          apiClient.get("/api/exam").then(res => setExams(res.data.exams || [])).catch(console.error);
-      }, []);
+    useEffect(() => {
+        apiClient.get("/api/room").then(res => setRooms(res.data)).catch(console.error);
+        apiClient.get("/api/exam").then(res => setExams(res.data.exams || [])).catch(console.error);
+    }, []);
 
       const addExam = async () => {
           if (!selectedCourse || !selectedRoom || !startDate || !startTime || !endTime) return;
@@ -48,9 +45,10 @@ import { useState, useEffect } from "react";
               setStartDate("");
               setStartTime("");
               setEndTime("");
-          } catch (err) {
-              alert("Failed to create exam");
-          }
+            } catch (err) {
+                console.error(err);
+                alert("Failed to create exam");
+            }
       };
 
       const deleteExam = async (id) => {

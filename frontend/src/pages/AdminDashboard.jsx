@@ -1,33 +1,34 @@
 import { useState, useEffect } from "react";
-  import { useNavigate } from "react-router-dom";
-  import apiClient from "../api/apiClient";
+import { useNavigate } from "react-router-dom";
+import apiClient from "../api/apiClient";
 
-  export function AdminDashboard() {
-      const navigate = useNavigate();
-      const [activeNav, setActiveNav] = useState("dashboard");
-      const [users, setUsers] = useState([]);
-      const [exams, setExams] = useState([]);
-      const [rooms, setRooms] = useState([]);
+export function AdminDashboard() {
+    const navigate = useNavigate();
+    const [activeNav, setActiveNav] = useState("dashboard");
+    const [users, setUsers] = useState([]);
+    const [exams, setExams] = useState([]);
+    const [rooms, setRooms] = useState([]);
 
-      useEffect(() => {
-          if (!localStorage.getItem("token")) navigate("/login");
-          fetchAll();
-      }, []);
+    useEffect(() => {
+        if (!localStorage.getItem("token")) navigate("/login");
 
-      const fetchAll = async () => {
-          try {
-              const [usersRes, examsRes, roomsRes] = await Promise.all([
-                  apiClient.get("/api/user"),
-                  apiClient.get("/api/exam"),
-                  apiClient.get("/api/room"),
-              ]);
-              setUsers(usersRes.data);
-              setExams(examsRes.data.exams || []);
-              setRooms(roomsRes.data);
-          } catch (err) {
-              console.error(err);
-          }
-      };
+        const load = async () => {
+            try {
+                const [usersRes, examsRes, roomsRes] = await Promise.all([
+                    apiClient.get("/api/user"),
+                    apiClient.get("/api/exam"),
+                    apiClient.get("/api/room"),
+                ]);
+                setUsers(usersRes.data || []);
+                setExams(examsRes.data.exams || []);
+                setRooms(roomsRes.data || []);
+            } catch (err) {
+                console.error(err);
+            }
+        };
+
+        load();
+    }, [navigate]);
 
       const deleteUser = async (id) => {
           if (!confirm("Delete this user?")) return;

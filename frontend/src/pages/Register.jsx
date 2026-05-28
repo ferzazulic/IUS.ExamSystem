@@ -24,15 +24,16 @@ export function Register() {
       }
       setError("");
       try {
-          await apiClient.post("/api/Auth/register", {
+          await apiClient.post("/api/auth/register", {
               fullName: name,
               email,
               password,
               role
           });
           navigate("/login");
-      } catch {
-          setError("Registration failed. Email may already be in use.");
+      } catch (error) {
+          const message = error?.response?.data?.message || error?.message || "Registration failed.";
+          setError(message);
       }
   };
 
@@ -108,7 +109,7 @@ export function Register() {
   </div>
   {error && <p style={{ color: "red", fontSize: "14px", margin: "4px 0" }}>{error}</p>}
 
-                    <button className="login-btn" onClick={handleRegister}>
+                    <button type="button" className="login-btn" onClick={handleRegister}>
                         Create account
                     </button>
 

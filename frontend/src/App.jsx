@@ -1,9 +1,8 @@
-import { useState } from 'react'
-import './App.css'
 import { Route, Routes, Navigate } from "react-router-dom";
 
 import { Login } from "./pages/Login.jsx";
 import { Register } from "./pages/Register";
+import { AuthRedirect } from "./pages/AuthRedirect.jsx";
 import { Dashboard } from "./pages/Dashboard";
 import { StudentDashboard } from "./pages/StudentDashboard.jsx";
 import { AdminDashboard } from "./pages/AdminDashboard";
@@ -14,7 +13,6 @@ import {Rooms} from "./pages/Rooms";
 
 
 function App() {
-    const [count, setCount] = useState(0);
 
     return (
         <Routes>
@@ -23,6 +21,7 @@ function App() {
 
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/auth" element={<AuthRedirect />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/student-dashboard" element={<StudentDashboard />} />
             <Route path="/admin-dashboard" element={<AdminDashboard />} />

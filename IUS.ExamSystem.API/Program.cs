@@ -4,12 +4,12 @@ using IUS.ExamSystem.Infrastructure.Auth;
 using IUS.ExamSystem.Infrastructure.Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Identity.Web;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Text;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
-
-builder.WebHost.UseUrls("http://localhost:5000", "https://localhost:5001");
 
 // Add services to the container
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -22,8 +22,73 @@ builder.Services.AddScoped<IConflictDetectionService, ConflictDetectionService>(
 builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<IRoomService, RoomService>();
 
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddMicrosoftIdentityWebApi(builder.Configuration.GetSection("AzureAd"));
+builder.Services.AddScoped<JwtService>();
+
+var jwtKey = builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationException("Jwt:Key configuration missing");
+var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? throw new InvalidOperationException("Jwt:Issuer configuration missing");
+var jwtAudience = builder.Configuration["Jwt:Audience"] ?? throw new InvalidOperationException("Jwt:Audience configuration missing");
+var azureInstance = builder.Configuration["AzureAd:Instance"] ?? throw new InvalidOperationException("AzureAd:Instance configuration missing");
+var azureTenant = builder.Configuration["AzureAd:TenantId"] ?? throw new InvalidOperationException("AzureAd:TenantId configuration missing");
+var azureAudience = builder.Configuration["AzureAd:Audience"] ?? throw new InvalidOperationException("AzureAd:Audience configuration missing");
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultScheme = "Bearer";
+    options.DefaultChallengeScheme = "Bearer";
+})
+.AddPolicyScheme("Bearer", "Bearer or Azure token", options =>
+{
+    options.ForwardDefaultSelector = context =>
+    {
+        var authHeader = context.Request.Headers["Authorization"].FirstOrDefault();
+        if (!string.IsNullOrWhiteSpace(authHeader) && authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+        {
+            var token = authHeader.Substring("Bearer ".Length).Trim();
+            try
+            {
+                var jwt = new JwtSecurityTokenHandler().ReadJwtToken(token);
+                if (jwt.Issuer == builder.Configuration["Jwt:Issuer"])
+                {
+                    return "LocalJwt";
+                }
+            }
+            catch
+            {
+                // fall back to Azure token validation
+            }
+        }
+
+        return "AzureJwt";
+    };
+})
+.AddJwtBearer("LocalJwt", options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidIssuer = jwtIssuer,
+        ValidateAudience = true,
+        ValidAudience = jwtAudience,
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+        ValidateLifetime = true,
+        ClockSkew = TimeSpan.FromMinutes(2)
+    };
+})
+.AddJwtBearer("AzureJwt", options =>
+{
+    options.Authority = $"{azureInstance}{azureTenant}";
+    options.Audience = azureAudience;
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidIssuers = new[]
+        {
+            $"{azureInstance}{azureTenant}/v2.0",
+            $"{azureInstance}{azureTenant}"
+        }
+    };
+});
 
 builder.Services.AddAuthorization();
 builder.Services.AddCors(options =>
@@ -72,6 +137,13 @@ builder.Services.AddSwaggerGen(options =>
 var app = builder.Build();
 app.UseDeveloperExceptionPage();
 // Configure the HTTP request pipeline
+
+// Run migrations on startup
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    db.Database.Migrate();
+}
 
 app.UseSwagger();
 app.UseSwaggerUI();

@@ -42,7 +42,7 @@ export function StudentDashboard() {
 
     useEffect(() => {
         if (!user) navigate("/login");
-    }, []);
+    }, [navigate, user]);
 
     const [exams, setExams] = useState([]);
     const [activeNav, setActiveNav] = useState("dashboard");

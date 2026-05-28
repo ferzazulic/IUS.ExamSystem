@@ -27,21 +27,27 @@ import { useState, useEffect } from "react";
       const [assignments, setAssignments] = useState([]);
       const [students, setStudents] = useState([]);
 
-      useEffect(() => {
-          if (exam?.id) fetchAssignments();
-          apiClient.get("/api/user")
-              .then(res => setStudents(res.data.filter(u => u.role === "Student")))
-              .catch(console.error);
-      }, []);
+    useEffect(() => {
+        const load = async () => {
+            if (exam?.id) {
+                try {
+                    const res = await apiClient.get(`/api/exam/${exam.id}`);
+                    setAssignments(res.data.assignments || []);
+                } catch (e) {
+                    console.error(e);
+                }
+            }
 
-      const fetchAssignments = async () => {
-          try {
-              const res = await apiClient.get(`/api/exam/${exam.id}`);
-              setAssignments(res.data.assignments || []);
-          } catch (err) {
-              console.error(err);
-          }
-      };
+            try {
+                const res = await apiClient.get("/api/user");
+                setStudents(res.data.filter(u => u.role === "Student"));
+            } catch (e) {
+                console.error(e);
+            }
+        };
+
+        load();
+    }, [exam?.id]);
 
       const assignStudent = (studentName) => {
           if (!selectedSeat) return;
@@ -60,15 +66,21 @@ import { useState, useEffect } from "react";
           setSeatMap(updated);
       };
 
-      const autoAssign = async () => {
-          try {
-              await apiClient.post(`/api/exam/allocate/${exam.id}`);
-              setMessage("Seats allocated successfully!");
-              fetchAssignments();
-          } catch (err) {
-              setMessage("Failed to allocate seats.");
-          }
-      };
+    const autoAssign = async () => {
+        try {
+            await apiClient.post(`/api/exam/allocate/${exam.id}`);
+            setMessage("Seats allocated successfully!");
+            try {
+                const res = await apiClient.get(`/api/exam/${exam.id}`);
+                setAssignments(res.data.assignments || []);
+            } catch (e) {
+                console.error(e);
+            }
+        } catch (err) {
+            console.error(err);
+            setMessage("Failed to allocate seats.");
+        }
+    };
 
       const reset = () => {
           setSeatMap({});
