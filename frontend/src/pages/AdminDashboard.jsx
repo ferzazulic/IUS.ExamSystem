@@ -48,6 +48,25 @@ import { useState, useEffect } from "react";
 
       const totalStudents = users.filter(u => u.role === "Student").length;
 
+      const [createForm, setCreateForm] = useState({ fullName: "", email: "", password: "", role: "Student" });
+      const [createError, setCreateError] = useState("");
+      const [creating, setCreating] = useState(false);
+
+      const createUser = async () => {
+          if (!createForm.fullName.trim() || !createForm.email.trim() || !createForm.password.trim()) return;
+          setCreating(true);
+          setCreateError("");
+          try {
+              const res = await apiClient.post("/api/user", createForm);
+              setUsers(prev => [...prev, res.data]);
+              setCreateForm({ fullName: "", email: "", password: "", role: "Student" });
+          } catch (err) {
+              setCreateError(err.response?.data?.message || "Failed to create account");
+          } finally {
+              setCreating(false);
+          }
+      };
+
       return (
           <div className="canvas">
               <div className="orb orb-1"></div>
@@ -110,6 +129,63 @@ import { useState, useEffect } from "react";
                       {activeNav === "users" && (
                           <div className="hub-card" style={{ flexDirection: "column", alignItems: "flex-start", padding: "24px" }}>
                               <h2 style={{ marginBottom: "16px", fontWeight: "700" }}>User Management</h2>
+
+                              {/* CREATE USER FORM */}
+                              <div style={{
+                                  width: "100%", marginBottom: "24px", padding: "20px",
+                                  background: "#f8f7ff", borderRadius: "14px", border: "1.5px solid #e8e4ff"
+                              }}>
+                                  <h3 style={{ fontWeight: "700", marginBottom: "14px", fontSize: "1rem" }}>Create Account</h3>
+                                  <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "flex-end" }}>
+                                      <input
+                                          className="login-input"
+                                          placeholder="Full Name"
+                                          value={createForm.fullName}
+                                          onChange={e => setCreateForm(p => ({ ...p, fullName: e.target.value }))}
+                                          style={{ flex: "1 1 160px" }}
+                                      />
+                                      <input
+                                          className="login-input"
+                                          placeholder="Email"
+                                          type="email"
+                                          value={createForm.email}
+                                          onChange={e => setCreateForm(p => ({ ...p, email: e.target.value }))}
+                                          style={{ flex: "1 1 160px" }}
+                                      />
+                                      <input
+                                          className="login-input"
+                                          placeholder="Password"
+                                          type="password"
+                                          value={createForm.password}
+                                          onChange={e => setCreateForm(p => ({ ...p, password: e.target.value }))}
+                                          style={{ flex: "1 1 140px" }}
+                                      />
+                                      <select
+                                          className="login-input"
+                                          value={createForm.role}
+                                          onChange={e => setCreateForm(p => ({ ...p, role: e.target.value }))}
+                                          style={{ flex: "0 0 130px" }}
+                                      >
+                                          <option value="Student">Student</option>
+                                          <option value="Staff">Staff</option>
+                                          <option value="Admin">Admin</option>
+                                      </select>
+                                      <button
+                                          className="table-btn primary"
+                                          onClick={createUser}
+                                          disabled={creating}
+                                          style={{ flex: "0 0 auto", opacity: creating ? 0.6 : 1 }}
+                                      >
+                                          {creating ? "Creating..." : "+ Create"}
+                                      </button>
+                                  </div>
+                                  {createError && (
+                                      <p style={{ color: "#e74c3c", fontSize: "0.8rem", marginTop: "8px", fontWeight: "600" }}>
+                                          {createError}
+                                      </p>
+                                  )}
+                              </div>
+
                               <table style={{ width: "100%", borderCollapse: "separate", borderSpacing: "0 8px" }}>
                                   <thead>
                                       <tr style={{ opacity: 0.6 }}>

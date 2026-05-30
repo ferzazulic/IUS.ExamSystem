@@ -181,8 +181,45 @@ public class ExamController : ControllerBase
             subject = a.Exam.Subject,
             examDate = a.Exam.StartTime,
             roomName = a.Exam.Room?.Name,
-            seatNumber = a.SeatId.HasValue ? a.Seat?.Number : (int?)null
+            seatNumber = a.SeatId.HasValue ? a.Seat?.Number : (int?)null,
+            score = a.Score,
+            grade = a.Grade,
+            completedAt = a.CompletedAt
         }));
+    }
+
+    [HttpGet("{examId:int}/students")]
+    [Authorize(Roles = "Admin,Staff")]
+    public async Task<IActionResult> GetExamStudents(int examId)
+    {
+        var students = await _service.GetExamStudents(examId);
+        return Ok(students.Select(a => new
+        {
+            studentId = a.UserId,
+            studentName = a.Student?.FullName,
+            seatNumber = a.Seat?.Number,
+            score = a.Score,
+            grade = a.Grade,
+            completedAt = a.CompletedAt
+        }));
+    }
+
+    [HttpPut("{examId:int}/grade/{studentId:int}")]
+    [Authorize(Roles = "Admin,Staff")]
+    public async Task<IActionResult> GradeStudent(int examId, int studentId, [FromBody] GradeRequest request)
+    {
+        if (request.Score < 0 || request.Score > 100)
+            return BadRequest(new { error = "Score must be between 0 and 100" });
+
+        try
+        {
+            await _service.GradeStudent(examId, studentId, request.Score);
+            return Ok(new { message = "Grade saved successfully" });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
     }
 
     [HttpPost("{examId:int}/enroll")]
@@ -293,4 +330,9 @@ public class AssignSeatRequest
 {
     public int StudentId { get; set; }
     public int SeatId { get; set; }
+}
+
+public class GradeRequest
+{
+    public decimal Score { get; set; }
 }

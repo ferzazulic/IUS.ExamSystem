@@ -17,6 +17,8 @@ public interface IExamService
     Task<List<SeatMapEntry>> GetSeatMap(int examId);
     Task AssignSeat(int examId, int studentId, int seatId);
     Task RemoveSeatAssignment(int examId, int seatId);
+    Task GradeStudent(int examId, int studentId, decimal score);
+    Task<List<ExamAssignment>> GetExamStudents(int examId);
 }
 
 public record SeatMapEntry(int SeatId, int SeatNumber, int? StudentId, string? StudentName);

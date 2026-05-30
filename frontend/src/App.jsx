@@ -10,7 +10,9 @@ import { AdminDashboard } from "./pages/AdminDashboard";
 import { Exams } from "./pages/Exams";
 import { Seats } from "./pages/Seats";
 import { Courses} from "./pages/Courses";
-import {Rooms} from "./pages/Rooms";
+import { Rooms } from "./pages/Rooms";
+import { GradeExams } from "./pages/GradeExams";
+import { NotificationsManage } from "./pages/NotificationsManage";
 
 
 function App() {
@@ -30,6 +32,8 @@ function App() {
             <Route path="/seats" element={<Seats />} />
             <Route path="/courses" element={<Courses />} />
             <Route path="/rooms" element={<Rooms />} />
+            <Route path="/grade-exams" element={<GradeExams />} />
+            <Route path="/notifications-manage" element={<NotificationsManage />} />
         </Routes>
     );
 }

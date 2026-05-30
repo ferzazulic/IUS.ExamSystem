@@ -300,4 +300,35 @@ public async Task EnrollStudent(int examId, int studentId, int? seatId = null)
           await _context.SaveChangesAsync();
       }
   }
+
+  public async Task GradeStudent(int examId, int studentId, decimal score)
+  {
+      var assignment = await _context.ExamAssignments
+          .FirstOrDefaultAsync(ea => ea.ExamId == examId && ea.UserId == studentId);
+
+      if (assignment == null)
+          throw new InvalidOperationException("Student is not enrolled in this exam");
+
+      assignment.Score = score;
+      assignment.Grade = score switch
+      {
+          >= 90 => 4.0m,
+          >= 80 => 3.0m,
+          >= 70 => 2.0m,
+          >= 55 => 1.0m,
+          _ => 0.0m
+      };
+      assignment.CompletedAt = DateTime.UtcNow;
+
+      await _context.SaveChangesAsync();
+  }
+
+  public async Task<List<ExamAssignment>> GetExamStudents(int examId)
+  {
+      return await _context.ExamAssignments
+          .Include(a => a.Student)
+          .Include(a => a.Seat)
+          .Where(a => a.ExamId == examId)
+          .ToListAsync();
+  }
 }
