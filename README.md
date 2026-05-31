@@ -66,6 +66,45 @@ npm run dev
 
 The frontend runs at `http://localhost:5173` by default.
 
+## Docker
+
+The project can also be started using Docker Compose for easier setup and development.
+
+### Start the application
+
+Run the following command from the root directory:
+
+```powershell
+docker compose up
+```
+This command starts:
+- ASP.NET Core backend
+- SQL Server database
+
+### Stop the containers
+```powershell
+docker compose down
+```
+### Rebuild containers
+```powershell
+docker compose up --build
+```
+### Database
+
+The SQL Server container runs on:
+```powershell
+localhost:1434
+```
+Default credentials:
+
+```powershell
+User: sa
+Password: YourStrong@Passw0rd
+```
+### Notes
+- Make sure Docker Desktop is running before starting the containers.
+- Backend and database containers communicate automatically through Docker networking.
+
 ## Testing
 
 ### Backend Testing
