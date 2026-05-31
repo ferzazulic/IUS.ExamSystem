@@ -86,19 +86,23 @@ public class RoomService : IRoomService
         return await GetRoomById(id);
     }
 
-    public async Task<bool> DeleteRoom(int id)
-    {
-        var room = await _context.Rooms.FindAsync(id);
-        if (room == null)
-            return false;
+public async Task<bool> DeleteRoom(int id)
+{
+    var room = await _context.Rooms
+        .Include(r => r.Seats)
+        .FirstOrDefaultAsync(r => r.Id == id);
 
-        // Check if room has exams assigned
-        var hasExams = await _context.Exams.AnyAsync(e => e.RoomId == id);
-        if (hasExams)
-            throw new InvalidOperationException("Cannot delete room that has exams assigned");
+    if (room == null) return false;
 
-        _context.Rooms.Remove(room);
-        await _context.SaveChangesAsync();
-        return true;
-    }
+
+    var hasExams = await _context.Exams.AnyAsync(e => e.RoomId == id);
+    if (hasExams)
+        throw new InvalidOperationException("Cannot delete room that has exams assigned. Delete the exams first.");
+
+
+    _context.Seats.RemoveRange(room.Seats);
+    _context.Rooms.Remove(room);
+    await _context.SaveChangesAsync();
+    return true;
+}
 }

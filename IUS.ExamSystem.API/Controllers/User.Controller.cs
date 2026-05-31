@@ -53,15 +53,21 @@ public class UserController : ControllerBase
         }
     }
 
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteUser(int id)
+    [HttpPut("{id}")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> UpdateUser(int id, [FromBody] UpdateUserRequest request)
     {
-        var result = await _userService.DeleteUser(id);
+        if (string.IsNullOrWhiteSpace(request?.FullName) ||
+            string.IsNullOrWhiteSpace(request?.Email))
+            return BadRequest(new { message = "Full name and email are required" });
+
+        var result = await _userService.UpdateUser(id, request.FullName, request.Email);
         if (!result) return NotFound(new { message = "User not found" });
-        return Ok(new { message = "User deleted" });
+        return Ok(new { message = "User updated" });
     }
 
     [HttpPut("{id}/role")]
+    [Authorize(Roles = "Admin,Staff")]
     public async Task<IActionResult> ChangeRole(int id, [FromBody] ChangeRoleRequest request)
     {
         if (!Enum.TryParse<Role>(request.Role, out var role))
@@ -70,6 +76,14 @@ public class UserController : ControllerBase
         var result = await _userService.ChangeUserRole(id, role);
         if (!result) return NotFound(new { message = "User not found" });
         return Ok(new { message = "Role updated" });
+    }
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteUser(int id)
+    {
+        var result = await _userService.DeleteUser(id);
+        if (!result) return NotFound(new { message = "User not found" });
+        return Ok(new { message = "User deleted" });
     }
 }
 
@@ -84,4 +98,10 @@ public class CreateUserRequest
 public class ChangeRoleRequest
 {
     public string Role { get; set; }
+}
+
+public class UpdateUserRequest
+{
+    public string FullName { get; set; }
+    public string Email { get; set; }
 }

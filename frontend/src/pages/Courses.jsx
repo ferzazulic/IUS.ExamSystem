@@ -1,11 +1,8 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { ProfessorLayout } from "./ProfessorLayout";
 
 export function Courses() {
-    const navigate = useNavigate();
-
     const [courseName, setCourseName] = useState("");
-
     const [courses, setCourses] = useState(() => {
         return JSON.parse(localStorage.getItem("courses")) || [];
     });
@@ -16,13 +13,7 @@ export function Courses() {
 
     const addCourse = () => {
         if (!courseName.trim()) return;
-
-        const newCourse = {
-            id: Date.now(),
-            name: courseName
-        };
-
-        setCourses([...courses, newCourse]);
+        setCourses([...courses, { id: Date.now(), name: courseName }]);
         setCourseName("");
     };
 
@@ -31,98 +22,60 @@ export function Courses() {
     };
 
     return (
-        <div className="academia-container">
-
-            {/* HEADER */}
-            <div className="page-container exams-header">
-                <button className="back-btn" onClick={() => navigate(-1)}>
-                    ← Dashboard
-                </button>
-
-                <h1 className="exams-title">Courses</h1>
+        <ProfessorLayout active="courses">
+            <div style={{ marginBottom: "24px" }}>
+                <h1 style={{ fontWeight: "800", fontSize: "1.8rem", margin: 0 }}>Courses</h1>
             </div>
 
-            {/* 🔥 SVE ISPOD IDE U ISTI CONTAINER */}
-            <div className="page-container">
-
-                {/* ADD COURSE */}
-                <div
-                    style={{
-                        display: "flex",
-                        gap: "10px",
-                        alignItems: "center",
-                        marginTop: "20px",
-                        maxWidth: "600px"
-                    }}
-                >
+            {/* ADD COURSE */}
+            <div style={{
+                background: "white", borderRadius: "16px", padding: "24px",
+                boxShadow: "0 4px 24px rgba(0,0,0,0.06)", marginBottom: "24px"
+            }}>
+                <h3 style={{ fontWeight: "700", marginBottom: "14px", fontSize: "0.95rem" }}>Add Course</h3>
+                <div style={{ display: "flex", gap: "10px", alignItems: "center", maxWidth: "600px" }}>
                     <input
                         className="login-input"
                         placeholder="Course name"
                         value={courseName}
-                        onChange={(e) => setCourseName(e.target.value)}
-                        onKeyDown={(e) => {
-                            if (e.key === "Enter") addCourse();
-                        }}
-                        style={{ flex: 1 }}
+                        onChange={e => setCourseName(e.target.value)}
+                        onKeyDown={e => e.key === "Enter" && addCourse()}
+                        style={{ flex: 1, height: "40px" }}
                     />
-
-                    <button
-                        className="table-btn primary"
-                        style={{ minWidth: "140px" }}
-                        onClick={addCourse}
-                    >
+                    <button className="table-btn primary" onClick={addCourse}
+                            style={{ height: "40px", padding: "0 24px", borderRadius: "10px", fontWeight: "600" }}>
                         + Add
                     </button>
                 </div>
-
-                {/* LIST */}
-                <div style={{ marginTop: "20px", maxWidth: "600px" }}>
-                    {courses.length === 0 ? (
-                        <p
-                            style={{
-                                marginLeft:"2px",
-                                marginTop: "10px",
-                                fontWeight: "600",
-                                color: "#111",
-                                fontSize: "16px"
-                            }}
-                        >
-                            No courses yet.
-                        </p>
-                    ) : (
-                        <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                            {courses.map(c => (
-                                <div
-                                    key={c.id}
-                                    style={{
-                                        display: "flex",
-                                        justifyContent: "space-between",
-                                        alignItems: "center",
-                                        padding: "12px 16px",
-                                        borderRadius: "12px",
-                                        background: "white",
-                                        boxShadow: "0 2px 8px rgba(0,0,0,0.05)"
-                                    }}
-                                >
-                                    <span style={{ fontWeight: "500" }}>
-                                        {c.name}
-                                    </span>
-
-                                    <button
-                                        className="table-btn danger"
-                                        style={{ padding: "6px 12px" }}
-                                        onClick={() => deleteCourse(c.id)}
-                                    >
-                                        Delete
-                                    </button>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </div>
-
             </div>
 
-        </div>
+            {/* LIST */}
+            <div style={{
+                background: "white", borderRadius: "16px", padding: "24px",
+                boxShadow: "0 4px 24px rgba(0,0,0,0.06)"
+            }}>
+                <h3 style={{ fontWeight: "700", marginBottom: "14px", fontSize: "0.95rem" }}>All Courses</h3>
+                {courses.length === 0 ? (
+                    <p style={{ opacity: 0.5 }}>No courses yet.</p>
+                ) : (
+                    <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                        {courses.map(c => (
+                            <div key={c.id} style={{
+                                display: "flex", justifyContent: "space-between", alignItems: "center",
+                                padding: "14px 16px", borderRadius: "12px",
+                                background: "#fafafa", border: "1px solid #f0eeff"
+                            }}>
+                                <span style={{ fontWeight: "600" }}>{c.name}</span>
+                                <button className="table-btn danger"
+                                        onClick={() => deleteCourse(c.id)}
+                                        style={{ padding: "6px 16px", borderRadius: "8px" }}>
+                                    Delete
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+        </ProfessorLayout>
     );
 }

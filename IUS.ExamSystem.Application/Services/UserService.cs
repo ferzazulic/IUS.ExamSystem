@@ -68,6 +68,17 @@ public async Task<bool> DeleteUser(int id)
       await _context.SaveChangesAsync();
       return true;
   }
+
+public async Task<bool> UpdateUser(int id, string fullName, string email)
+{
+    var user = await _context.Users.FindAsync(id);
+    if (user == null) return false;
+
+    user.FullName = fullName;
+    user.Email = email;
+    await _context.SaveChangesAsync();
+    return true;
+}
     private string HashPassword(string password)
     {
         using var sha256 = SHA256.Create();

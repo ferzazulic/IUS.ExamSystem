@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import apiClient from "../api/apiClient";
+import { ProfessorLayout } from "./ProfessorLayout";
 
 function getGrid(capacity) {
     if (!capacity) return { seatsPerRow: 1, numRows: 0 };
@@ -11,8 +12,6 @@ function getGrid(capacity) {
 
 export function Seats() {
     const location = useLocation();
-    const navigate = useNavigate();
-
     const navExam = location.state;
 
     const [exams, setExams] = useState([]);
@@ -102,74 +101,94 @@ export function Seats() {
     const assignedCount = seatMapData.filter(s => s.studentId).length;
 
     return (
-        <div className="academia-container">
-            <div className="page-container exams-header">
-                <button className="back-btn" onClick={() => navigate(-1)}>← Dashboard</button>
-                <div className="title-block">
-                    <h1 className="exams-title">Seat Allocation</h1>
-                    {roomName && (
-                        <p className="exams-sub">
-                            Room: {roomName} ({capacity} seats) — {assignedCount} assigned
-                        </p>
-                    )}
-                </div>
-                {selectedExamId && (
-                    <div className="actions-bar">
-                        <button className="mode-btn active" onClick={autoAssign}>Auto Assign All</button>
-                    </div>
+        <ProfessorLayout active="seats">
+
+            {/* HEADER */}
+            <div style={{ marginBottom: "24px" }}>
+                <h1 style={{ fontWeight: "800", fontSize: "1.8rem", margin: 0 }}>Seat Allocation</h1>
+                {roomName && (
+                    <p style={{ color: "#888", margin: "4px 0 0", fontSize: "0.9rem" }}>
+                        Room: {roomName} ({capacity} seats) — {assignedCount} assigned
+                    </p>
                 )}
             </div>
 
-            {/* Exam selector */}
-            <div className="page-container" style={{ maxWidth: "420px" }}>
-                <select
-                    className="login-input"
-                    value={selectedExamId}
-                    onChange={e => { setSelectedSeat(null); setMessage(""); setSelectedExamId(e.target.value); }}
-                >
-                    <option value="">— Select an exam —</option>
-                    {exams.map(e => (
-                        <option key={e.id} value={e.id}>
-                            {e.subject} — {new Date(e.startTime).toLocaleDateString()} ({e.room?.name || "No room"})
-                        </option>
-                    ))}
-                </select>
+            {/* EXAM SELECTOR + AUTO ASSIGN */}
+            <div style={{
+                background: "white", borderRadius: "16px", padding: "24px",
+                boxShadow: "0 4px 24px rgba(0,0,0,0.06)", marginBottom: "24px"
+            }}>
+                <div style={{ display: "flex", gap: "12px", alignItems: "center", flexWrap: "wrap" }}>
+                    <select className="login-input"
+                            value={selectedExamId}
+                            onChange={e => { setSelectedSeat(null); setMessage(""); setSelectedExamId(e.target.value); }}
+                            style={{ flex: "1", minWidth: "200px", height: "40px" }}>
+                        <option value="">— Select an exam —</option>
+                        {exams.map(e => (
+                            <option key={e.id} value={e.id}>
+                                {e.subject} — {new Date(e.startTime).toLocaleDateString()} ({e.room?.name || "No room"})
+                            </option>
+                        ))}
+                    </select>
+                    {selectedExamId && (
+                        <button className="table-btn primary" onClick={autoAssign}
+                                style={{ height: "40px", padding: "0 24px", borderRadius: "10px", fontWeight: "600" }}>
+                            Auto Assign All
+                        </button>
+                    )}
+                </div>
             </div>
 
+            {/* MESSAGE */}
             {message && (
-                <div className="page-container" style={{ color: message.includes("success") || message.includes("removed") ? "green" : "red", fontWeight: "600" }}>
+                <div style={{
+                    padding: "12px 16px", borderRadius: "10px", marginBottom: "16px",
+                    background: message.includes("success") || message.includes("removed") ? "#eafaf1" : "#ffe0e0",
+                    color: message.includes("success") || message.includes("removed") ? "#27ae60" : "#e74c3c",
+                    fontWeight: "600", fontSize: "0.9rem"
+                }}>
                     {message}
                 </div>
             )}
 
-            {/* Student picker when a seat is selected */}
+            {/* STUDENT PICKER */}
             {selectedSeat && (
-                <div className="page-container student-picker">
-                    <span>Assign student to seat <strong>{selectedSeat.seatNumber}</strong>:</span>
-                    <select className="login-input" defaultValue="" onChange={e => assignStudent(e.target.value)}>
+                <div style={{
+                    background: "white", borderRadius: "16px", padding: "20px",
+                    boxShadow: "0 4px 24px rgba(0,0,0,0.06)", marginBottom: "24px",
+                    display: "flex", gap: "12px", alignItems: "center", flexWrap: "wrap"
+                }}>
+                    <span style={{ fontWeight: "600" }}>Assign student to seat <strong style={{ color: "#6c63ff" }}>{selectedSeat.seatNumber}</strong>:</span>
+                    <select className="login-input" defaultValue=""
+                            onChange={e => assignStudent(e.target.value)}
+                            style={{ flex: "1", minWidth: "200px", height: "40px" }}>
                         <option value="" disabled>Select student</option>
                         {students.map(s => (
                             <option key={s.id} value={s.id}>{s.fullName}</option>
                         ))}
                     </select>
-                    <button onClick={() => setSelectedSeat(null)} style={{ background: "#eee", border: "none", padding: "8px 16px", borderRadius: "8px", cursor: "pointer" }}>Cancel</button>
+                    <button onClick={() => setSelectedSeat(null)}
+                            style={{ padding: "8px 20px", borderRadius: "8px", border: "2px solid #e0e0e0", background: "white", color: "#888", fontWeight: "600", cursor: "pointer" }}>
+                        Cancel
+                    </button>
                 </div>
             )}
 
-            {loading && <div className="page-container" style={{ opacity: 0.6 }}>Loading seat map...</div>}
+            {loading && <p style={{ opacity: 0.6 }}>Loading seat map...</p>}
 
-            {/* Seat grid */}
+            {/* SEAT GRID */}
             {seatRows.length > 0 && (
-                <div className="page-container">
+                <div style={{
+                    background: "white", borderRadius: "16px", padding: "24px",
+                    boxShadow: "0 4px 24px rgba(0,0,0,0.06)"
+                }}>
                     <div style={{ overflowX: "auto" }}>
                         <div style={{ display: "inline-block", minWidth: "fit-content" }}>
-                            {/* Column numbers header */}
                             <div style={{ display: "flex", gap: "6px", marginBottom: "4px", marginLeft: "28px" }}>
                                 {Array.from({ length: seatsPerRow }, (_, i) => (
                                     <div key={i} style={{ width: "52px", textAlign: "center", fontSize: "11px", fontWeight: "700", opacity: 0.4 }}>{i + 1}</div>
                                 ))}
                             </div>
-
                             {seatRows.map(({ label, seats }) => (
                                 <div key={label} style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "6px" }}>
                                     <div style={{ width: "22px", textAlign: "center", fontWeight: "700", fontSize: "13px", color: "#6c63ff" }}>{label}</div>
@@ -177,21 +196,18 @@ export function Seats() {
                                         const isSelected = selectedSeat?.seatId === seat.seatId;
                                         const isAssigned = !!seat.studentId;
                                         return (
-                                            <div
-                                                key={seat.seatId}
-                                                onClick={() => handleSeatClick(seat)}
-                                                title={isAssigned ? `${seat.studentName} — click to remove` : `Seat ${seat.seatNumber} — click to assign`}
-                                                style={{
-                                                    width: "52px", height: "52px", borderRadius: "10px",
-                                                    border: isSelected ? "2px solid #6c63ff" : isAssigned ? "2px solid #27ae60" : "2px solid #e0e0e0",
-                                                    background: isSelected ? "#f0eeff" : isAssigned ? "#eafaf1" : "white",
-                                                    display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-                                                    cursor: "pointer", fontSize: "10px", fontWeight: "600",
-                                                    color: isAssigned ? "#27ae60" : "#555",
-                                                    transition: "all 0.15s", padding: "4px", textAlign: "center",
-                                                    overflow: "hidden", lineHeight: "1.2"
-                                                }}
-                                            >
+                                            <div key={seat.seatId} onClick={() => handleSeatClick(seat)}
+                                                 title={isAssigned ? `${seat.studentName} — click to remove` : `Seat ${seat.seatNumber} — click to assign`}
+                                                 style={{
+                                                     width: "52px", height: "52px", borderRadius: "10px",
+                                                     border: isSelected ? "2px solid #6c63ff" : isAssigned ? "2px solid #27ae60" : "2px solid #e0e0e0",
+                                                     background: isSelected ? "#f0eeff" : isAssigned ? "#eafaf1" : "white",
+                                                     display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+                                                     cursor: "pointer", fontSize: "10px", fontWeight: "600",
+                                                     color: isAssigned ? "#27ae60" : "#555",
+                                                     transition: "all 0.15s", padding: "4px", textAlign: "center",
+                                                     overflow: "hidden", lineHeight: "1.2"
+                                                 }}>
                                                 <span style={{ fontSize: "9px", opacity: 0.6 }}>{label}{seat.seatNumber}</span>
                                                 {isAssigned && (
                                                     <span style={{ fontSize: "9px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "48px" }}>
@@ -220,8 +236,8 @@ export function Seats() {
             )}
 
             {selectedExamId && !loading && seatMapData.length === 0 && (
-                <div className="page-container" style={{ opacity: 0.5 }}>No seats found for this exam's room.</div>
+                <p style={{ opacity: 0.5 }}>No seats found for this exam's room.</p>
             )}
-        </div>
+        </ProfessorLayout>
     );
 }

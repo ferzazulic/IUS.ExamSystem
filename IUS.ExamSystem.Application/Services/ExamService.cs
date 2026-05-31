@@ -169,10 +169,18 @@ public class ExamService : IExamService
 
         return availableSeats;
     }
-    public async Task<bool> DeleteExam(int id)
+  public async Task<bool> DeleteExam(int id)
   {
-      var exam = await _context.Exams.FindAsync(id);
+      var exam = await _context.Exams
+          .Include(e => e.Assignments)
+          .FirstOrDefaultAsync(e => e.Id == id);
+
       if (exam == null) return false;
+
+
+      _context.ExamAssignments.RemoveRange(exam.Assignments);
+
+
       _context.Exams.Remove(exam);
       await _context.SaveChangesAsync();
       return true;

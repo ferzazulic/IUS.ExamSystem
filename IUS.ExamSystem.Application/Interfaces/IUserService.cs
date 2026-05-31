@@ -10,4 +10,5 @@ public interface IUserService
     Task<List<User>> GetAllUsers();
     Task<bool> DeleteUser(int id);
     Task<bool> ChangeUserRole(int id, Role newRole);
+    Task<bool> UpdateUser(int id, string fullName, string email);
 }

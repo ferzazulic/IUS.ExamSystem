@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+
 import apiClient from "../api/apiClient";
+import { ProfessorLayout } from "./ProfessorLayout";
 
 function getRoomGrid(capacity) {
     if (capacity <= 0) return { seatsPerRow: 1, numRows: 0 };
@@ -19,13 +20,13 @@ function RoomGrid({ capacity }) {
                 const count = Math.min(seatsPerRow, capacity - start);
                 return (
                     <div key={r} style={{ display: "flex", alignItems: "center", gap: "4px", marginBottom: "4px" }}>
-                        <span style={{ width: "18px", fontSize: "11px", fontWeight: "700", color: "#1a73e8", opacity: 0.7 }}>{rowLabel}</span>
+                        <span style={{ width: "18px", fontSize: "11px", fontWeight: "700", color: "#6c63ff", opacity: 0.7 }}>{rowLabel}</span>
                         {Array.from({ length: count }, (_, c) => (
                             <div key={c} style={{
                                 width: "22px", height: "22px", borderRadius: "4px",
-                                background: "#e8f0fe", border: "1px solid #a8c4f8",
+                                background: "#f0eeff", border: "1px solid #a29bfe",
                                 fontSize: "9px", display: "flex", alignItems: "center",
-                                justifyContent: "center", color: "#1a73e8", fontWeight: "600"
+                                justifyContent: "center", color: "#6c63ff", fontWeight: "600"
                             }}>
                                 {c + 1}
                             </div>
@@ -41,7 +42,6 @@ function RoomGrid({ capacity }) {
 }
 
 export function Rooms() {
-    const navigate = useNavigate();
     const role = localStorage.getItem("role");
     const canCreate = role === "Admin" || role === "Staff";
 
@@ -82,23 +82,28 @@ export function Rooms() {
     };
 
     return (
-        <div className="academia-container">
-            <div className="page-container exams-header">
-                <button className="back-btn" onClick={() => navigate(-1)}>← Dashboard</button>
-                <h1 className="exams-title">Rooms</h1>
+        <ProfessorLayout active="rooms">
+
+            {/* HEADER */}
+            <div style={{ marginBottom: "24px" }}>
+                <h1 style={{ fontWeight: "800", fontSize: "1.8rem", margin: 0 }}>Rooms</h1>
             </div>
 
+            {/* ADD ROOM */}
             {canCreate && (
-                <div className="page-container exam-form" style={{ maxWidth: "700px" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
-                        <h3 style={{ margin: "0", fontWeight: "700", whiteSpace: "nowrap" }}>Add New Room</h3>
+                <div style={{
+                    background: "white", borderRadius: "16px", padding: "24px",
+                    boxShadow: "0 4px 24px rgba(0,0,0,0.06)", marginBottom: "24px"
+                }}>
+                    <h3 style={{ fontWeight: "700", marginBottom: "14px", fontSize: "0.95rem" }}>Add New Room</h3>
+                    <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
                         <input
                             className="login-input"
-                            placeholder="Room name (e.g. Room A)"
+                            placeholder="Room name (e.g. A101)"
                             value={name}
                             onChange={e => setName(e.target.value)}
                             onKeyDown={e => e.key === "Enter" && createRoom()}
-                            style={{ margin: "0", flex: "1", minWidth: "160px" }}
+                            style={{ flex: "1", minWidth: "160px", height: "40px" }}
                         />
                         <input
                             className="login-input"
@@ -108,57 +113,56 @@ export function Rooms() {
                             min="1"
                             onChange={e => setCapacity(e.target.value)}
                             onKeyDown={e => e.key === "Enter" && createRoom()}
-                            style={{ margin: "0", width: "120px" }}
+                            style={{ width: "120px", height: "40px" }}
                         />
-                        <button
-                            onClick={createRoom}
-                            style={{ background: "#1a73e8", color: "white", border: "none", padding: "10px 20px", borderRadius: "10px", cursor: "pointer", fontWeight: "700", fontSize: "14px", whiteSpace: "nowrap" }}
-                        >
+                        <button className="table-btn primary" onClick={createRoom}
+                                style={{ height: "40px", padding: "0 24px", borderRadius: "10px", fontWeight: "600" }}>
                             + Create Room
                         </button>
                     </div>
-                    {error && <p style={{ color: "red", fontSize: "13px", margin: "8px 0 0" }}>{error}</p>}
+                    {error && <p style={{ color: "#e74c3c", fontSize: "0.8rem", marginTop: "8px", fontWeight: "600" }}>{error}</p>}
                 </div>
             )}
 
-            <div className="page-container">
-                <div style={{ marginTop: "20px", display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: "16px" }}>
-                    {rooms.map(room => (
-                        <div key={room.id} style={{
-                            background: "white", padding: "20px", borderRadius: "16px",
-                            boxShadow: "0 2px 12px rgba(0,0,0,0.07)"
-                        }}>
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                <div>
-                                    <div style={{ fontWeight: "700", fontSize: "17px" }}>{room.name}</div>
-                                    <div style={{ fontSize: "13px", opacity: 0.6, marginTop: "2px" }}>{room.capacity} seats total</div>
-                                </div>
-                                <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-                                    <button
-                                        onClick={() => setExpandedRoom(expandedRoom === room.id ? null : room.id)}
-                                        style={{ background: "#1a73e8", color: "white", border: "none", padding: "6px 12px", borderRadius: "8px", cursor: "pointer", fontWeight: "600", fontSize: "12px" }}
-                                    >
-                                        {expandedRoom === room.id ? "Hide" : "Layout"}
-                                    </button>
-                                    {canCreate && (
-                                        <button
-                                            onClick={() => deleteRoom(room.id)}
-                                            style={{ background: "#ffe0e0", color: "#e74c3c", border: "none", padding: "6px 12px", borderRadius: "8px", cursor: "pointer", fontWeight: "600", fontSize: "12px" }}
-                                        >
-                                            Delete
-                                        </button>
-                                    )}
-                                </div>
+            {/* ROOMS GRID */}
+            <div style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
+                gap: "16px"
+            }}>
+                {rooms.map(room => (
+                    <div key={room.id} style={{
+                        background: "white", padding: "20px", borderRadius: "16px",
+                        boxShadow: "0 4px 16px rgba(0,0,0,0.06)",
+                        borderTop: "4px solid #6c63ff"
+                    }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <div>
+                                <div style={{ fontWeight: "700", fontSize: "1.1rem" }}>{room.name}</div>
+                                <div style={{ fontSize: "0.82rem", color: "#888", marginTop: "2px" }}>{room.capacity} seats total</div>
                             </div>
-                            {expandedRoom === room.id && <RoomGrid capacity={room.capacity} />}
+                            <div style={{ display: "flex", gap: "8px" }}>
+                                <button className="table-btn primary"
+                                        onClick={() => setExpandedRoom(expandedRoom === room.id ? null : room.id)}
+                                        style={{ padding: "6px 12px", borderRadius: "8px" }}>
+                                    {expandedRoom === room.id ? "Hide" : "Layout"}
+                                </button>
+                                {canCreate && (
+                                    <button className="table-btn danger"
+                                            onClick={() => deleteRoom(room.id)}
+                                            style={{ padding: "6px 12px", borderRadius: "8px" }}>
+                                        Delete
+                                    </button>
+                                )}
+                            </div>
                         </div>
-                    ))}
-                </div>
-
-                {rooms.length === 0 && (
-                    <p style={{ opacity: 0.5, marginTop: "20px" }}>No rooms yet.</p>
-                )}
+                        {expandedRoom === room.id && <RoomGrid capacity={room.capacity} />}
+                    </div>
+                ))}
             </div>
-        </div>
+
+            {rooms.length === 0 && <p style={{ opacity: 0.5, marginTop: "20px" }}>No rooms yet.</p>}
+
+        </ProfessorLayout>
     );
 }
