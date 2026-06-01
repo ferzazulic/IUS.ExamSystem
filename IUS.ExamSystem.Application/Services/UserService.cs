@@ -38,11 +38,26 @@ public class UserService : IUserService
 
     public async Task<string> Login(string email, string password)
     {
+        Console.WriteLine($"LOGIN ATTEMPT: {email}");
+
         var user = await _context.Users
             .FirstOrDefaultAsync(u => u.Email == email);
 
-        if (user == null || user.PasswordHash != HashPassword(password))
+        if (user == null)
+        {
+            Console.WriteLine("USER NOT FOUND");
             throw new Exception("Invalid credentials");
+        }
+
+        Console.WriteLine($"FOUND USER: {user.Email}");
+        Console.WriteLine($"STORED HASH: {user.PasswordHash}");
+        Console.WriteLine($"ENTERED HASH: {HashPassword(password)}");
+
+        if (user.PasswordHash != HashPassword(password))
+        {
+            Console.WriteLine("PASSWORD DOES NOT MATCH");
+            throw new Exception("Invalid credentials");
+        }
 
         return _jwtService.GenerateToken(user);
     }

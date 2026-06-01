@@ -2,7 +2,7 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 
 WORKDIR /src
 
-COPY .. .
+COPY . .
 
 RUN dotnet publish "IUS.ExamSystem.API/IUS.ExamSystem.API.csproj" -c Release -o /app/publish
 

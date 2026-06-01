@@ -2,6 +2,7 @@ using IUS.ExamSystem.Application.Interfaces;
 using IUS.ExamSystem.Application.Services;
 using IUS.ExamSystem.Infrastructure.Auth;
 using IUS.ExamSystem.Infrastructure.Data;
+using IUS.ExamSystem.Infrastructure.Seeder;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -101,4 +102,40 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    var logger = scope.ServiceProvider
+        .GetRequiredService<ILoggerFactory>()
+        .CreateLogger("DatabaseStartup");
+
+    await MigrateAndSeedDatabaseAsync(context, logger);
+}
+
 await app.RunAsync();
+
+static async Task MigrateAndSeedDatabaseAsync(AppDbContext context, ILogger logger)
+{
+    const int maxAttempts = 12;
+
+    for (var attempt = 1; attempt <= maxAttempts; attempt++)
+    {
+        try
+        {
+            await context.Database.MigrateAsync();
+            await DbSeeder.SeedAsync(context);
+            return;
+        }
+        catch (Exception ex) when (attempt < maxAttempts)
+        {
+            logger.LogWarning(
+                ex,
+                "Database is not ready yet. Retrying migration and seeding attempt {Attempt}/{MaxAttempts}.",
+                attempt,
+                maxAttempts);
+
+            await Task.Delay(TimeSpan.FromSeconds(5));
+        }
+    }
+}
