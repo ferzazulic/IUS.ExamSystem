@@ -5,6 +5,8 @@ import apiClient from "../api/apiClient";
 export function AdminDashboard() {
     const navigate = useNavigate();
     const [activeNav, setActiveNav] = useState("dashboard");
+    const fullName = localStorage.getItem("fullName") || "";
+    const initials = fullName.trim().split(/\s+/).map(n => n[0]).join("").toUpperCase().slice(0, 2) || "?";
     const [users, setUsers] = useState([]);
     const [exams, setExams] = useState([]);
     const [rooms, setRooms] = useState([]);
@@ -164,7 +166,7 @@ export function AdminDashboard() {
                 {/* SIDEBAR */}
                 <div className="ultra-sidebar">
                     <div className="brand">
-                        <div className="ius-logo">IUS</div>
+                        <div className="ius-logo">{initials}</div>
                         <strong>Admin Panel</strong>
                     </div>
                     {[

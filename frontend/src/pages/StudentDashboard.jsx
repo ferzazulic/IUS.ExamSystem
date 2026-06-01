@@ -5,6 +5,8 @@ import apiClient from "../api/apiClient";
 export function StudentDashboard() {
     const navigate = useNavigate();
     const user = localStorage.getItem("token");
+    const fullName = localStorage.getItem("fullName") || "";
+    const initials = fullName.trim().split(/\s+/).map(n => n[0]).join("").toUpperCase().slice(0, 2) || "?";
 
     useEffect(() => {
         if (!user) navigate("/login");
@@ -148,7 +150,7 @@ export function StudentDashboard() {
                 {/* SIDEBAR */}
                 <div className="ultra-sidebar">
                     <div className="brand">
-                        <div className="ius-logo">IUS</div>
+                        <div className="ius-logo">{initials}</div>
                         <strong>Student Panel</strong>
                     </div>
 

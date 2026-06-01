@@ -38,9 +38,12 @@ export function Login() {
                     "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"
                     ];
 
+            const fullName = payload["fullName"] || "";
+
             localStorage.setItem("token", token);
             localStorage.setItem("role", role);
             localStorage.setItem("userId", userId);
+            localStorage.setItem("fullName", fullName);
 
             if (role === "Admin") {
                 navigate("/admin-dashboard");

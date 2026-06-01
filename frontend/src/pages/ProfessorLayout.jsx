@@ -2,6 +2,8 @@ import { useNavigate } from "react-router-dom";
 
 export function ProfessorLayout({ children, active }) {
     const navigate = useNavigate();
+    const fullName = localStorage.getItem("fullName") || "";
+    const initials = fullName.trim().split(/\s+/).map(n => n[0]).join("").toUpperCase().slice(0, 2) || "?";
 
     const navItems = [
         { key: "dashboard", label: "Dashboard", route: "/dashboard" },
@@ -22,7 +24,7 @@ export function ProfessorLayout({ children, active }) {
                 {/* SIDEBAR */}
                 <div className="ultra-sidebar">
                     <div className="brand">
-                        <div className="ius-logo">IUS</div>
+                        <div className="ius-logo">{initials}</div>
                         <strong>Professor Panel</strong>
                     </div>
 
