@@ -1,0 +1,50 @@
+## Visual Studio
+.vs/
+.vscode/
+*.user
+*.suo
+*.sln.iml
+.claude/
+*.claude
+
+## Build folders
+bin/
+obj/
+dist/
+build/
+
+## Node
+node_modules/
+
+## NuGet
+*.nupkg
+*.snupkg
+.nuget/
+
+## Entity Framework
+.efcore/
+Migrations/*.Designer.cs
+
+## Runtime
+appsettings.local.json
+appsettings.Development.json
+
+## Environment
+.env
+.env.local
+
+## Logs
+logs/
+*.log
+
+## Docker
+docker-data/
+
+## OS
+.DS_Store
+Thumbs.db
+
+## IDE
+.idea/
+*.swp
+*.swo
