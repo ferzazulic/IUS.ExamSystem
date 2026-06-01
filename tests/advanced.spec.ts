@@ -1,0 +1,79 @@
+import { test, expect } from '@playwright/test';
+
+const BASE = process.env.TEST_BASE_URL || 'http://localhost:5173';
+
+
+
+test.describe('Advanced Courses Tests', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto(`${BASE}/courses`);
+
+    await page.evaluate(() => localStorage.removeItem('courses'));
+    await page.reload();
+  });
+
+
+
+
+  test('duplicate course names: adding two courses with the same name', async ({ page }) => {
+    const name = 'Math';
+    
+    await page.getByPlaceholder('Course name').fill(name);
+    await page.getByRole('button', { name: '+ Add' }).click();
+    
+
+    await page.getByPlaceholder('Course name').fill(name);
+    await page.getByRole('button', { name: '+ Add' }).click();
+
+
+    const mathEntries = page.getByText(name);
+    await expect(mathEntries).toHaveCount(2);
+  });
+
+
+
+
+
+  test('long string overflow: adding a 200+ character course name', async ({ page }) => {
+    const longName = 'A'.repeat(250); 
+    
+    await page.getByPlaceholder('Course name').fill(longName);
+    await page.getByRole('button', { name: '+ Add' }).click();
+
+    const courseContainer = page.locator('[style*="background: #fafafa"]').first();
+    await expect(courseContainer).toBeVisible();
+
+    
+    const deleteButton = courseContainer.getByRole('button', { name: 'Delete' });
+    await expect(deleteButton).toBeVisible();
+  });
+
+
+
+
+
+  test('mass addition: add 20 courses rapidly and verify UI stability', async ({ page }) => {
+    const courseCount = 20;
+
+    
+    for (let i = 1; i <= courseCount; i++) {
+      const courseName = `Course ${i}`;
+      await page.getByPlaceholder('Course name').fill(courseName);
+      await page.getByRole('button', { name: '+ Add' }).click();
+    }
+
+
+    const courseItems = page.locator('[style*="background: #fafafa"]');
+    await expect(courseItems).toHaveCount(courseCount);
+
+    
+    const lastCourseContainer = courseItems.last();
+    const deleteButton = lastCourseContainer.getByRole('button', { name: 'Delete' });
+    
+    
+    await deleteButton.click();
+    
+    
+    await expect(courseItems).toHaveCount(courseCount - 1);
+  });
+});
