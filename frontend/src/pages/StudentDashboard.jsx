@@ -17,6 +17,12 @@ export function StudentDashboard() {
 
 
     const [notifications, setNotifications] = useState([]);
+    const [dismissedIds, setDismissedIds] = useState(() => {
+        try {
+            const stored = localStorage.getItem("dismissedNotifications");
+            return stored ? new Set(JSON.parse(stored)) : new Set();
+        } catch { return new Set(); }
+    });
     const [seatModal, setSeatModal] = useState(null);
     const [selectedSeatId, setSelectedSeatId] = useState(null);
     const [seatLoading, setSeatLoading] = useState(false);
@@ -99,6 +105,25 @@ export function StudentDashboard() {
         }
     };
 
+    const dismissNotification = (id) => {
+        setDismissedIds(prev => {
+            const next = new Set(prev);
+            next.add(id);
+            localStorage.setItem("dismissedNotifications", JSON.stringify([...next]));
+            return next;
+        });
+    };
+
+    const dismissAll = () => {
+        setDismissedIds(prev => {
+            const next = new Set([...prev, ...notifications.map(n => n.id)]);
+            localStorage.setItem("dismissedNotifications", JSON.stringify([...next]));
+            return next;
+        });
+    };
+
+    const visibleNotifications = notifications.filter(n => !dismissedIds.has(n.id));
+
     // ── SHARED STYLES ──
     const cardStyle = {
         background: "white", borderRadius: "16px", padding: "28px",
@@ -133,16 +158,16 @@ export function StudentDashboard() {
                         { key: "grades", label: "My Grades" },
                         { key: "seats", label: "My Seats" },
                         {
-                            key: "notifications", label: "Notifications", badge: notifications.length > 0 ? {
-                                count: notifications.length,
-                                color: notifications.some(n => n.isImportant) ? "#e74c3c" : "#6c63ff"
+                            key: "notifications", label: "Notifications", badge: visibleNotifications.length > 0 ? {
+                                count: visibleNotifications.length,
+                                color: visibleNotifications.some(n => n.isImportant) ? "#e74c3c" : "#6c63ff"
                             } : null
                         },
                     ].map(item => (
                         <div
                             key={item.key}
                             className={`nav-pill ${activeNav === item.key ? "active" : ""}`}
-                            onClick={() => setActiveNav(item.key)}
+                            onClick={() => { setActiveNav(item.key); if (item.key === "notifications") dismissAll(); }}
                             style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}
                         >
                             <span>{item.label}</span>
@@ -185,7 +210,7 @@ export function StudentDashboard() {
                                     { label: "Available Exams", value: exams.length, color: "#6c63ff" },
                                     { label: "Enrolled Exams", value: enrolledExamIds.size, color: "#2ecc71" },
 
-                                    { label: "Notifications", value: notifications.length, color: "#f39c12" },
+                                    { label: "Notifications", value: visibleNotifications.length, color: "#f39c12" },
                                 ].map(stat => (
                                     <div key={stat.label} style={{
                                         background: "white", borderRadius: "14px", padding: "20px",
@@ -199,31 +224,38 @@ export function StudentDashboard() {
                             </div>
 
                             {/* NOTIFICATIONS PREVIEW */}
-                            {notifications.length > 0 && (
+                            {visibleNotifications.length > 0 && (
                                 <div style={{ ...cardStyle }}>
                                     <h3 style={{ fontWeight: "700", marginBottom: "16px", fontSize: "1rem" }}>Recent Notifications</h3>
                                     <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                                        {notifications.slice(0, 3).map(n => {
+                                        {visibleNotifications.slice(0, 3).map(n => {
                                             const accent = n.type === "warning" ? "#f39c12" : n.type === "exam" ? "#6c63ff" : "#1a73e8";
                                             return (
                                                 <div key={n.id} style={{
                                                     background: "#fafafa", borderRadius: "10px",
-                                                    padding: "12px 16px", borderLeft: `4px solid ${accent}`
+                                                    padding: "12px 16px", borderLeft: `4px solid ${accent}`,
+                                                    display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "8px"
                                                 }}>
-                                                    <div style={{ fontWeight: "700", fontSize: "0.9rem", display: "flex", alignItems: "center", gap: "8px" }}>
-                                                        {n.title}
-                                                        {n.isImportant && (
-                                                            <span style={{ background: "#ffe0e0", color: "#e74c3c", fontSize: "0.65rem", padding: "2px 7px", borderRadius: "6px", fontWeight: "700" }}>IMPORTANT</span>
-                                                        )}
+                                                    <div>
+                                                        <div style={{ fontWeight: "700", fontSize: "0.9rem", display: "flex", alignItems: "center", gap: "8px" }}>
+                                                            {n.title}
+                                                            {n.isImportant && (
+                                                                <span style={{ background: "#ffe0e0", color: "#e74c3c", fontSize: "0.65rem", padding: "2px 7px", borderRadius: "6px", fontWeight: "700" }}>IMPORTANT</span>
+                                                            )}
+                                                        </div>
+                                                        <div style={{ fontSize: "0.82rem", opacity: 0.7, marginTop: "3px" }}>{n.body}</div>
                                                     </div>
-                                                    <div style={{ fontSize: "0.82rem", opacity: 0.7, marginTop: "3px" }}>{n.body}</div>
+                                                    <button onClick={() => dismissNotification(n.id)} style={{
+                                                        background: "none", border: "none", cursor: "pointer",
+                                                        color: "#aaa", fontSize: "1rem", lineHeight: 1, padding: "0 2px", flexShrink: 0
+                                                    }}>×</button>
                                                 </div>
                                             );
                                         })}
-                                        {notifications.length > 3 && (
-                                            <div onClick={() => setActiveNav("notifications")}
+                                        {visibleNotifications.length > 3 && (
+                                            <div onClick={() => { setActiveNav("notifications"); dismissAll(); }}
                                                  style={{ textAlign: "center", color: "#6c63ff", fontWeight: "600", cursor: "pointer", fontSize: "0.85rem", padding: "4px" }}>
-                                                View all {notifications.length} notifications →
+                                                View all {visibleNotifications.length} notifications →
                                             </div>
                                         )}
                                     </div>
@@ -390,30 +422,40 @@ export function StudentDashboard() {
                             <h2 style={{ fontWeight: "700", marginBottom: "24px", fontSize: "1.4rem" }}>Notifications</h2>
                             {notifications.length === 0 ? (
                                 <p style={{ opacity: 0.5 }}>No notifications yet.</p>
+                            ) : visibleNotifications.length === 0 ? (
+                                <p style={{ opacity: 0.5 }}>All notifications dismissed.</p>
                             ) : (
                                 <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                                    {notifications.map(n => {
+                                    {visibleNotifications.map(n => {
                                         const accent = n.type === "warning" ? "#f39c12" : n.type === "exam" ? "#6c63ff" : "#1a73e8";
                                         return (
                                             <div key={n.id} style={{
                                                 borderRadius: "12px", padding: "16px 20px",
                                                 boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
                                                 borderLeft: `5px solid ${accent}`,
-                                                background: n.isImportant ? "#fffaf9" : "white"
+                                                background: n.isImportant ? "#fffaf9" : "white",
+                                                display: "flex", alignItems: "flex-start", gap: "12px"
                                             }}>
-                                                <div style={{ fontWeight: "700", fontSize: "1rem", display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
-                                                    {n.title}
-                                                    {n.isImportant && (
-                                                        <span style={{ background: "#ffe0e0", color: "#e74c3c", fontSize: "0.65rem", padding: "2px 8px", borderRadius: "6px", fontWeight: "700" }}>IMPORTANT</span>
-                                                    )}
-                                                    <span style={{ marginLeft: "auto", background: accent + "22", color: accent, fontSize: "0.7rem", padding: "2px 8px", borderRadius: "6px", fontWeight: "600", textTransform: "capitalize" }}>
-                                                        {n.type}
-                                                    </span>
+                                                <div style={{ flex: 1 }}>
+                                                    <div style={{ fontWeight: "700", fontSize: "1rem", display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
+                                                        {n.title}
+                                                        {n.isImportant && (
+                                                            <span style={{ background: "#ffe0e0", color: "#e74c3c", fontSize: "0.65rem", padding: "2px 8px", borderRadius: "6px", fontWeight: "700" }}>IMPORTANT</span>
+                                                        )}
+                                                        <span style={{ marginLeft: "auto", background: accent + "22", color: accent, fontSize: "0.7rem", padding: "2px 8px", borderRadius: "6px", fontWeight: "600", textTransform: "capitalize" }}>
+                                                            {n.type}
+                                                        </span>
+                                                    </div>
+                                                    <div style={{ fontSize: "0.9rem", color: "#444", lineHeight: "1.5" }}>{n.body}</div>
+                                                    <div style={{ fontSize: "0.75rem", opacity: 0.45, marginTop: "8px" }}>
+                                                        Posted by {n.createdBy} · {new Date(n.createdAt).toLocaleString()}
+                                                    </div>
                                                 </div>
-                                                <div style={{ fontSize: "0.9rem", color: "#444", lineHeight: "1.5" }}>{n.body}</div>
-                                                <div style={{ fontSize: "0.75rem", opacity: 0.45, marginTop: "8px" }}>
-                                                    Posted by {n.createdBy} · {new Date(n.createdAt).toLocaleString()}
-                                                </div>
+                                                <button onClick={() => dismissNotification(n.id)} style={{
+                                                    background: "none", border: "none", cursor: "pointer",
+                                                    color: "#bbb", fontSize: "1.2rem", lineHeight: 1,
+                                                    padding: "0 4px", flexShrink: 0, marginTop: "2px"
+                                                }} title="Dismiss">×</button>
                                             </div>
                                         );
                                     })}

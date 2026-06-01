@@ -16,20 +16,6 @@ public class AuthController : ControllerBase
         _userService = userService;
     }
 
-    // ✅ REGISTER
-    [HttpPost("register")]
-    public async Task<IActionResult> Register(RegisterRequest request)
-    {
-        var user = await _userService.Register(
-            request.FullName,
-            request.Email,
-            request.Password,
-            request.Role
-        );
-
-        return Ok(user);
-    }
-
     // ✅ LOGIN
     [HttpPost("login")]
     public async Task<IActionResult> Login(LoginRequest request)

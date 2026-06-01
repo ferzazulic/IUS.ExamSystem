@@ -10,8 +10,11 @@ function getRoomGrid(capacity) {
     return { seatsPerRow, numRows };
 }
 
-function RoomGrid({ capacity }) {
+function RoomGrid({ capacity, seatAssignments = [] }) {
     const { seatsPerRow, numRows } = getRoomGrid(capacity);
+    const assignmentMap = {};
+    seatAssignments.forEach(s => { assignmentMap[s.seatNumber] = s; });
+
     return (
         <div style={{ marginTop: "12px" }}>
             {Array.from({ length: numRows }, (_, r) => {
@@ -21,21 +24,35 @@ function RoomGrid({ capacity }) {
                 return (
                     <div key={r} style={{ display: "flex", alignItems: "center", gap: "4px", marginBottom: "4px" }}>
                         <span style={{ width: "18px", fontSize: "11px", fontWeight: "700", color: "#6c63ff", opacity: 0.7 }}>{rowLabel}</span>
-                        {Array.from({ length: count }, (_, c) => (
-                            <div key={c} style={{
-                                width: "22px", height: "22px", borderRadius: "4px",
-                                background: "#f0eeff", border: "1px solid #a29bfe",
-                                fontSize: "9px", display: "flex", alignItems: "center",
-                                justifyContent: "center", color: "#6c63ff", fontWeight: "600"
-                            }}>
-                                {c + 1}
-                            </div>
-                        ))}
+                        {Array.from({ length: count }, (_, c) => {
+                            const seatNum = start + c + 1;
+                            const assignment = assignmentMap[seatNum];
+                            const isAssigned = !!assignment?.studentId;
+                            return (
+                                <div key={c} title={isAssigned ? assignment.studentName : `Seat ${rowLabel}${c + 1}`} style={{
+                                    width: "40px", height: "40px", borderRadius: "6px",
+                                    background: isAssigned ? "#eafaf1" : "#f0eeff",
+                                    border: isAssigned ? "1.5px solid #27ae60" : "1px solid #a29bfe",
+                                    fontSize: "9px", display: "flex", flexDirection: "column",
+                                    alignItems: "center", justifyContent: "center",
+                                    color: isAssigned ? "#27ae60" : "#6c63ff", fontWeight: "600",
+                                    padding: "2px", boxSizing: "border-box", overflow: "hidden",
+                                    lineHeight: "1.2", textAlign: "center",
+                                }}>
+                                    <span style={{ fontSize: "9px", opacity: isAssigned ? 0.7 : 1 }}>{rowLabel}{c + 1}</span>
+                                    {isAssigned && (
+                                        <span style={{ fontSize: "8px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "36px" }}>
+                                            {assignment.studentName?.split(" ")[0]}
+                                        </span>
+                                    )}
+                                </div>
+                            );
+                        })}
                     </div>
                 );
             })}
             <div style={{ fontSize: "11px", opacity: 0.5, marginTop: "6px" }}>
-                {numRows} rows x {seatsPerRow} seats
+                {numRows} rows × {seatsPerRow} seats
             </div>
         </div>
     );
@@ -46,14 +63,24 @@ export function Rooms() {
     const canCreate = role === "Admin" || role === "Staff";
 
     const [rooms, setRooms] = useState([]);
+    const [exams, setExams] = useState([]);
+    const [selectedExamId, setSelectedExamId] = useState("");
+    const [seatData, setSeatData] = useState(null);
     const [name, setName] = useState("");
     const [capacity, setCapacity] = useState("");
     const [error, setError] = useState("");
-    const [expandedRoom, setExpandedRoom] = useState(null);
 
     useEffect(() => {
         apiClient.get("/api/room").then(res => setRooms(res.data)).catch(console.error);
+        apiClient.get("/api/exam").then(res => setExams(res.data.exams || [])).catch(console.error);
     }, []);
+
+    useEffect(() => {
+        if (!selectedExamId) { setSeatData(null); return; }
+        apiClient.get(`/api/exam/${selectedExamId}/seat-map`)
+            .then(res => setSeatData(res.data))
+            .catch(console.error);
+    }, [selectedExamId]);
 
     const createRoom = async () => {
         if (!name.trim() || !capacity || parseInt(capacity) <= 0) {
@@ -124,29 +151,44 @@ export function Rooms() {
                 </div>
             )}
 
+            {/* EXAM SELECTOR */}
+            <div style={{
+                background: "white", borderRadius: "16px", padding: "16px 24px",
+                boxShadow: "0 4px 24px rgba(0,0,0,0.06)", marginBottom: "24px",
+                display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap"
+            }}>
+                <span style={{ fontWeight: "600", fontSize: "0.85rem", color: "#555", whiteSpace: "nowrap" }}>Show seats for exam:</span>
+                <select className="login-input" value={selectedExamId}
+                        onChange={e => setSelectedExamId(e.target.value)}
+                        style={{ flex: "1", minWidth: "200px", height: "38px" }}>
+                    <option value="">— Empty layout —</option>
+                    {exams.map(e => (
+                        <option key={e.id} value={e.id}>
+                            {e.subject} — {new Date(e.startTime).toLocaleDateString()} ({e.room?.name || "No room"})
+                        </option>
+                    ))}
+                </select>
+            </div>
+
             {/* ROOMS GRID */}
             <div style={{
                 display: "grid",
                 gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
                 gap: "16px"
             }}>
-                {rooms.map(room => (
-                    <div key={room.id} style={{
-                        background: "white", padding: "20px", borderRadius: "16px",
-                        boxShadow: "0 4px 16px rgba(0,0,0,0.06)",
-                        borderTop: "4px solid #6c63ff"
-                    }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                            <div>
-                                <div style={{ fontWeight: "700", fontSize: "1.1rem" }}>{room.name}</div>
-                                <div style={{ fontSize: "0.82rem", color: "#888", marginTop: "2px" }}>{room.capacity} seats total</div>
-                            </div>
-                            <div style={{ display: "flex", gap: "8px" }}>
-                                <button className="table-btn primary"
-                                        onClick={() => setExpandedRoom(expandedRoom === room.id ? null : room.id)}
-                                        style={{ padding: "6px 12px", borderRadius: "8px" }}>
-                                    {expandedRoom === room.id ? "Hide" : "Layout"}
-                                </button>
+                {rooms.map(room => {
+                    const assignments = seatData?.roomName === room.name ? seatData.seats : [];
+                    return (
+                        <div key={room.id} style={{
+                            background: "white", padding: "20px", borderRadius: "16px",
+                            boxShadow: "0 4px 16px rgba(0,0,0,0.06)",
+                            borderTop: "4px solid #6c63ff"
+                        }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                <div>
+                                    <div style={{ fontWeight: "700", fontSize: "1.1rem" }}>{room.name}</div>
+                                    <div style={{ fontSize: "0.82rem", color: "#888", marginTop: "2px" }}>{room.capacity} seats total</div>
+                                </div>
                                 {canCreate && (
                                     <button className="table-btn danger"
                                             onClick={() => deleteRoom(room.id)}
@@ -155,10 +197,10 @@ export function Rooms() {
                                     </button>
                                 )}
                             </div>
+                            <RoomGrid capacity={room.capacity} seatAssignments={assignments} />
                         </div>
-                        {expandedRoom === room.id && <RoomGrid capacity={room.capacity} />}
-                    </div>
-                ))}
+                    );
+                })}
             </div>
 
             {rooms.length === 0 && <p style={{ opacity: 0.5, marginTop: "20px" }}>No rooms yet.</p>}
