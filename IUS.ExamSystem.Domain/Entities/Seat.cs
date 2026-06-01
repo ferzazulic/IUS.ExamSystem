@@ -7,4 +7,6 @@ public class Seat
 
     public int RoomId { get; set; }
     public Room Room { get; set; }
+
+    public override string ToString() => $"Seat {{ Id = {Id}, Number = {Number}, RoomId = {RoomId} }}";
 }

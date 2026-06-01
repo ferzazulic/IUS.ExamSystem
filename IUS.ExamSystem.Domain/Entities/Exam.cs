@@ -10,5 +10,8 @@ public class Exam
     public int RoomId { get; set; }
     public Room Room { get; set; }
 
-    public ICollection<ExamAssignment> Assignments { get; set; }
+    // Student assignments for this exam
+    public ICollection<ExamAssignment> Assignments { get; set; } = new List<ExamAssignment>();
+
+    public override string ToString() => $"Exam {{ Id = {Id}, Subject = {Subject}, Start = {StartTime} }}";
 }

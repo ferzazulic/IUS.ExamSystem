@@ -16,4 +16,7 @@ public class ExamAssignment
     public decimal? Score { get; set; }
     public decimal? Grade { get; set; }
     public DateTime? CompletedAt { get; set; }
+
+    public override string ToString()
+        => $"ExamAssignment {{ Id = {Id}, UserId = {UserId}, ExamId = {ExamId}, SeatId = {SeatId} }}";
 }

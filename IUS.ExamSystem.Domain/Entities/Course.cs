@@ -8,5 +8,8 @@ public class Course
     public string Type { get; set; }
     public string Professor { get; set; }
 
-    public ICollection<CourseEnrollment> Enrollments { get; set; }
+    // Navigation: students enrolled in this course
+    public ICollection<CourseEnrollment> Enrollments { get; set; } = new List<CourseEnrollment>();
+
+    public override string ToString() => $"Course {{ Id = {Id}, Code = {Code}, Name = {Name} }}";
 }
