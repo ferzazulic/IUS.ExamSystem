@@ -12,8 +12,19 @@ using System.Text.Json.Serialization;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container
+var useInMemoryDatabase = builder.Environment.IsEnvironment("Testing");
+
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
+{
+    if (useInMemoryDatabase)
+    {
+        options.UseInMemoryDatabase("IUS_ExamSystem_Testing");
+    }
+    else
+    {
+        options.UseSqlServer(builder.Configuration.GetConnectionString("Default"));
+    }
+});
 
 builder.Services.AddScoped<IUserService, UserService>();
 
@@ -138,11 +149,35 @@ var app = builder.Build();
 app.UseDeveloperExceptionPage();
 // Configure the HTTP request pipeline
 
-// Run migrations on startup
-using (var scope = app.Services.CreateScope())
+// Run migrations on startup with retry in case SQL Server is still warming up.
+if (!useInMemoryDatabase)
 {
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    db.Database.Migrate();
+    using (var scope = app.Services.CreateScope())
+    {
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var attempt = 0;
+        var maxAttempts = 10;
+        while (true)
+        {
+            try
+            {
+                db.Database.Migrate();
+                break;
+            }
+            catch (Exception ex)
+            {
+                attempt++;
+                if (attempt >= maxAttempts)
+                {
+                    Console.WriteLine($"Database migration failed after {attempt} attempts: {ex.Message}");
+                    throw;
+                }
+
+                Console.WriteLine($"Database migration attempt {attempt} failed: {ex.Message}. Retrying in 5 seconds...");
+                await Task.Delay(TimeSpan.FromSeconds(5));
+            }
+        }
+    }
 }
 
 app.UseSwagger();

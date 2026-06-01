@@ -66,10 +66,15 @@ public class AuthController : ControllerBase
                 return BadRequest(new { message = "Invalid token format" });
             }
 
-            // Extract claims from Azure AD token
-            var emailClaim = token.Claims.FirstOrDefault(c => c.Type == "preferred_username" || c.Type == "email" || c.Type == "upn")?.Value;
-            var nameClaim = token.Claims.FirstOrDefault(c => c.Type == "name" || c.Type == "given_name")?.Value;
-            var oidClaim = token.Claims.FirstOrDefault(c => c.Type == "oid")?.Value;
+            // Extract claims from Azure AD token. Some access tokens omit profile
+            // fields, so the frontend also sends MSAL account data as fallback.
+            var emailClaim = token.Claims.FirstOrDefault(c => c.Type == "preferred_username" || c.Type == "email" || c.Type == "upn")?.Value
+                ?? request.Email;
+            var nameClaim = token.Claims.FirstOrDefault(c => c.Type == "name" || c.Type == "given_name")?.Value
+                ?? request.FullName
+                ?? emailClaim;
+            var oidClaim = token.Claims.FirstOrDefault(c => c.Type == "oid")?.Value
+                ?? request.AzureId;
 
             if (string.IsNullOrEmpty(emailClaim) || string.IsNullOrEmpty(oidClaim))
             {
@@ -94,4 +99,7 @@ public class AuthController : ControllerBase
 public class AzureLoginRequest
 {
     public string Token { get; set; }
+    public string? Email { get; set; }
+    public string? FullName { get; set; }
+    public string? AzureId { get; set; }
 }

@@ -25,8 +25,8 @@ FROM nginx:alpine
 # Copy built app to Nginx html directory
 COPY --from=build /app/dist /usr/share/nginx/html
 
-# Copy custom nginx config if needed (optional)
-# COPY nginx.conf /etc/nginx/nginx.conf
+# Copy custom nginx config to support SPA routing
+COPY nginx.conf /etc/nginx/nginx.conf
 
 # Expose port 80
 EXPOSE 80

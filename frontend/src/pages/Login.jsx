@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import logo from "../assets/iuslogo.png";
 import { useNavigate } from "react-router-dom";
-import { useMsal } from "@azure/msal-react";
 import { loginRequest, msalConfig } from "../msalConfig.js";
 import apiClient from "../api/apiClient.js";
+import { completeAzureLogin } from "../auth/completeAzureLogin.js";
+import { msalInstance } from "../auth/msalInstance.js";
 
 export function Login() {
     const [error, setError] = useState(() => {
@@ -17,29 +18,65 @@ export function Login() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
-    const { instance } = useMsal();
     const navigate = useNavigate();
 
-    
+    useEffect(() => {
+        const finishInterruptedRedirect = async () => {
+            if (!sessionStorage.getItem("azureLoginInProgress") || localStorage.getItem("token")) {
+                return;
+            }
+
+            const account = msalInstance.getActiveAccount() || msalInstance.getAllAccounts()[0];
+            if (!account) {
+                return;
+            }
+
+            try {
+                const scopes = ["openid", "profile", ...loginRequest.scopes];
+                msalInstance.setActiveAccount(account);
+                const tokenResponse = await msalInstance.acquireTokenSilent({
+                    ...loginRequest,
+                    scopes,
+                    account,
+                });
+                const { path } = await completeAzureLogin({
+                    accessToken: tokenResponse.accessToken,
+                    account,
+                });
+                sessionStorage.removeItem("azureLoginInProgress");
+                navigate(path, { replace: true });
+            } catch (err) {
+                console.error("Interrupted Azure login recovery failed", err);
+                sessionStorage.removeItem("azureLoginInProgress");
+                const message = err.response?.data?.message || err.message || "Microsoft login failed";
+                setError("Login failed: " + message);
+            }
+        };
+
+        finishInterruptedRedirect();
+    }, [navigate]);
 
     const handleLogin = async () => {
         setError("");
-        console.log("handleLogin start", { instance, redirectUri: msalConfig.auth.redirectUri });
+        console.log("handleLogin start", { instance: msalInstance, redirectUri: msalConfig.auth.redirectUri });
         try {
-            if (!instance || typeof instance.loginRedirect !== "function") {
+            if (!msalInstance || typeof msalInstance.loginRedirect !== "function") {
                 throw new Error("MSAL instance not ready or loginRedirect missing");
             }
 
             const scopes = ["openid", "profile", ...loginRequest.scopes];
             console.log("calling loginRedirect", scopes);
-            await instance.loginRedirect({
+            sessionStorage.setItem("azureLoginInProgress", "true");
+            await msalInstance.loginRedirect({
                 ...loginRequest,
                 scopes,
                 redirectUri: msalConfig.auth.redirectUri,
+                navigateToLoginRequestUrl: false,
+                prompt: "select_account",
             });
-            console.log("loginRedirect returned");
         } catch (err) {
             console.error("handleLogin error", err);
+            sessionStorage.removeItem("azureLoginInProgress");
             const message = err?.message || err?.errorMessage || "Login failed.";
             setError("Login failed: " + message);
         }
@@ -104,6 +141,7 @@ export function Login() {
                         <input
                             type="email"
                             placeholder="Email"
+                            autoComplete="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             required
@@ -119,6 +157,7 @@ export function Login() {
                         <input
                             type="password"
                             placeholder="Password"
+                            autoComplete="current-password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             required
