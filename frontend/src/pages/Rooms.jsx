@@ -99,12 +99,12 @@ export function Rooms() {
     };
 
     const deleteRoom = async (id) => {
-        if (!window.confirm("Delete this room?")) return;
         try {
             await apiClient.delete(`/api/room/${id}`);
             setRooms(prev => prev.filter(r => r.id !== id));
         } catch (err) {
-            alert(err.response?.data?.error || "Failed to delete room");
+            console.error(err);
+            setError(err.response?.data?.error || "Failed to delete room");
         }
     };
 

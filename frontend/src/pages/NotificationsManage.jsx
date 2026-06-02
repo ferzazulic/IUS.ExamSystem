@@ -6,7 +6,7 @@ export function NotificationsManage() {
     const [notifications, setNotifications] = useState([]);
     const [form, setForm] = useState({ title: "", body: "", type: "info", isImportant: false });
     const [saving, setSaving] = useState(false);
-
+    const [error, setError] = useState("");
     const fetchNotifications = () => {
         apiClient.get("/api/notification")
             .then(res => setNotifications(res.data || []))
@@ -23,16 +23,19 @@ export function NotificationsManage() {
             setForm({ title: "", body: "", type: "info", isImportant: false });
             fetchNotifications();
         } catch (err) {
-            alert(err.response?.data?.error || "Failed to post notification");
+            setError(err.response?.data?.error || "Failed to post notification");
         } finally {
             setSaving(false);
         }
     };
 
     const remove = async (id) => {
-        if (!confirm("Delete this notification?")) return;
-        await apiClient.delete(`/api/notification/${id}`);
-        setNotifications(prev => prev.filter(n => n.id !== id));
+        try {
+            await apiClient.delete(`/api/notification/${id}`);
+            setNotifications(prev => prev.filter(n => n.id !== id));
+        } catch (err) {
+            setError("Failed to delete notification");
+        }
     };
 
     const typeColor = (type) =>
@@ -92,6 +95,16 @@ export function NotificationsManage() {
                             {saving ? "Posting..." : "+ Post"}
                         </button>
                     </div>
+                    {error && (
+                        <p style={{
+                            color: "#e74c3c",
+                            fontSize: "0.8rem",
+                            marginTop: "10px",
+                            fontWeight: "600"
+                        }}>
+                            {error}
+                        </p>
+                    )}
                 </div>
             </div>
 

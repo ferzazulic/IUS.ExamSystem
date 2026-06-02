@@ -53,7 +53,6 @@ export function Seats() {
 
     const handleSeatClick = async (seat) => {
         if (seat.studentId) {
-            if (!window.confirm(`Remove ${seat.studentName} from seat ${seat.seatNumber}?`)) return;
             try {
                 await apiClient.delete(`/api/exam/${selectedExamId}/seat/${seat.seatId}`);
                 await loadSeatMap();

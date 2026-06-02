@@ -78,9 +78,12 @@ export function AdminDashboard() {
     };
 
     const deleteUser = async (id) => {
-        if (!confirm("Delete this user?")) return;
-        await apiClient.delete(`/api/user/${id}`);
-        setUsers(prev => prev.filter(u => u.id !== id));
+        try {
+            await apiClient.delete(`/api/user/${id}`);
+            setUsers(prev => prev.filter(u => u.id !== id));
+        } catch (err) {
+            console.error(err);
+        }
     };
 
     // ── ROOM FUNCTIONS ──
@@ -116,19 +119,21 @@ export function AdminDashboard() {
     };
 
     const deleteRoom = async (id) => {
-        if (!confirm("Delete this room?")) return;
         try {
             await apiClient.delete(`/api/room/${id}`);
             setRooms(prev => prev.filter(r => r.id !== id));
         } catch (err) {
-            alert(err.response?.data?.error || "Failed to delete room");
+            console.error(err);
         }
     };
-    // ── EXAM FUNCTIONS ──
+
     const deleteExam = async (id) => {
-        if (!confirm("Delete this exam?")) return;
-        await apiClient.delete(`/api/exam/${id}`);
-        setExams(prev => prev.filter(e => e.id !== id));
+        try {
+            await apiClient.delete(`/api/exam/${id}`);
+            setExams(prev => prev.filter(e => e.id !== id));
+        } catch (err) {
+            console.error(err);
+        }
     };
 
     const totalStudents = users.filter(u => u.role === "Student").length;
