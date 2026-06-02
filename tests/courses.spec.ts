@@ -90,11 +90,11 @@ test.describe('Courses CRUD (client-side)', () => {
 
     
     await page.getByText('Rooms').click();
-    await expect(page.getByRole('heading', { name: 'Rooms' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Rooms', exact: true })).toBeVisible();
 
-    
     await page.goBack();
-    await expect(page.getByRole('heading', { name: 'Courses' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Courses', exact: true })).toBeVisible();
     await expect(page.getByText(name)).toBeVisible();
   });
-});
+  });
+  

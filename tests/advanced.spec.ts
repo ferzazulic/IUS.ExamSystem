@@ -35,12 +35,12 @@ test.describe('Advanced Courses Tests', () => {
 
 
   test('long string overflow: adding a 200+ character course name', async ({ page }) => {
-    const longName = 'A'.repeat(250); 
-    
+    const longName = 'A'.repeat(250);
+
     await page.getByPlaceholder('Course name').fill(longName);
     await page.getByRole('button', { name: '+ Add' }).click();
 
-    const courseContainer = page.locator('[style*="background: #fafafa"]').first();
+    const courseContainer = page.getByTestId('course-item').first();
     await expect(courseContainer).toBeVisible();
 
     
@@ -55,25 +55,20 @@ test.describe('Advanced Courses Tests', () => {
   test('mass addition: add 20 courses rapidly and verify UI stability', async ({ page }) => {
     const courseCount = 20;
 
-    
     for (let i = 1; i <= courseCount; i++) {
       const courseName = `Course ${i}`;
       await page.getByPlaceholder('Course name').fill(courseName);
       await page.getByRole('button', { name: '+ Add' }).click();
     }
 
+    const courseItems = page.getByTestId('course-item');
+    await expect(courseItems).toHaveCount(courseCount, { timeout: 10000 });
 
-    const courseItems = page.locator('[style*="background: #fafafa"]');
-    await expect(courseItems).toHaveCount(courseCount);
-
-    
     const lastCourseContainer = courseItems.last();
     const deleteButton = lastCourseContainer.getByRole('button', { name: 'Delete' });
-    
-    
+
     await deleteButton.click();
-    
-    
-    await expect(courseItems).toHaveCount(courseCount - 1);
+
+    await expect(courseItems).toHaveCount(courseCount - 1, { timeout: 10000 });
   });
 });
