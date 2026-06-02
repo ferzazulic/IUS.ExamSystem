@@ -60,7 +60,7 @@ export function Courses() {
                 ) : (
                     <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                         {courses.map(c => (
-                            <div key={c.id} style={{
+                            <div key={c.id} data-testid="course-item" style={{
                                 display: "flex", justifyContent: "space-between", alignItems: "center",
                                 padding: "14px 16px", borderRadius: "12px",
                                 background: "#fafafa", border: "1px solid #f0eeff"
