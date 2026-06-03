@@ -3,6 +3,7 @@ import './App.css'
 import { Route, Routes, Navigate } from "react-router-dom";
 
 import { Login } from "./pages/Login.jsx";
+import { AuthRedirect } from "./pages/AuthRedirect.jsx";
 
 import { Dashboard } from "./pages/Dashboard";
 import { StudentDashboard } from "./pages/StudentDashboard.jsx";
@@ -24,6 +25,7 @@ function App() {
             <Route path="/" element={<Navigate to="/login" />} />
 
             <Route path="/login" element={<Login />} />
+            <Route path="/auth" element={<AuthRedirect />} />
 
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/student-dashboard" element={<StudentDashboard />} />

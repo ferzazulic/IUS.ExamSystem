@@ -12,6 +12,8 @@ public interface IUserService
 
     Task<string> Login(string email, string password);
 
+    Task<string> AzureLogin(string email, string fullName, string azureId);
+
     Task<List<User>> GetAllUsers();
 
     Task<bool> DeleteUser(int id);

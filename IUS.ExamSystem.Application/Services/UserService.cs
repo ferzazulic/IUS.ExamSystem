@@ -62,6 +62,27 @@ public class UserService : IUserService
         return _jwtService.GenerateToken(user);
     }
 
+    public async Task<string> AzureLogin(string email, string fullName, string azureId)
+    {
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+
+        if (user == null)
+        {
+            user = new User
+            {
+                FullName = fullName,
+                Email = email,
+                PasswordHash = HashPassword(azureId),
+                Role = Role.Student
+            };
+
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+        }
+
+        return _jwtService.GenerateToken(user);
+    }
+
     public async Task<List<User>> GetAllUsers()
     {
         return await _context.Users.ToListAsync();
