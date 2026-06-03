@@ -13,7 +13,8 @@ export function Courses() {
 
     const addCourse = () => {
         if (!courseName.trim()) return;
-        setCourses([...courses, { id: Date.now(), name: courseName }]);
+        const id = crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`;
+        setCourses([...courses, { id, name: courseName }]);
         setCourseName("");
     };
 

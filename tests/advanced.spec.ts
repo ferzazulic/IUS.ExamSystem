@@ -67,6 +67,8 @@ test.describe('Advanced Courses Tests', () => {
     const lastCourseContainer = courseItems.last();
     const deleteButton = lastCourseContainer.getByRole('button', { name: 'Delete' });
 
+    await lastCourseContainer.scrollIntoViewIfNeeded();
+    await expect(deleteButton).toBeVisible();
     await deleteButton.click();
 
     await expect(courseItems).toHaveCount(courseCount - 1, { timeout: 10000 });
