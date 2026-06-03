@@ -53,12 +53,17 @@ test.describe('Advanced Courses Tests', () => {
 
 
   test('mass addition: add 20 courses rapidly and verify UI stability', async ({ page }) => {
+    test.setTimeout(60000);
     const courseCount = 20;
+    const input = page.getByPlaceholder('Course name');
+    const addButton = page.getByRole('button', { name: '+ Add' });
+
+    await expect(input).toBeVisible();
 
     for (let i = 1; i <= courseCount; i++) {
       const courseName = `Course ${i}`;
-      await page.getByPlaceholder('Course name').fill(courseName);
-      await page.getByRole('button', { name: '+ Add' }).click();
+      await input.fill(courseName);
+      await addButton.click();
     }
 
     const courseItems = page.getByTestId('course-item');

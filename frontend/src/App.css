@@ -954,6 +954,8 @@ input:checked + .slider:before { transform: translateX(24px); }
     background: white;
     color: #0f172a;
     text-decoration: none;
+    cursor: pointer;
+    font-family: inherit;
     font-size: 0.85rem;
     font-weight: 800;
     transition: all 0.25s ease;

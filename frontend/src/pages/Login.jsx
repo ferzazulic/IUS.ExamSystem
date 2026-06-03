@@ -1,16 +1,32 @@
 import { useState } from "react";
+import { PublicClientApplication } from "@azure/msal-browser";
 import apiClient from "../api/apiClient";
 import logo from "../assets/iuslogo.png";
 import { useNavigate } from "react-router-dom";
 import React from "react";
 
+const azureClientId =
+    import.meta.env.VITE_AZURE_CLIENT_ID || "562c6df4-0ce8-4165-8969-f300f4c1842a";
+const azureTenantId =
+    import.meta.env.VITE_AZURE_TENANT_ID || "2f2dcb5d-f3e1-4f33-8584-dcacd25d604d";
+const azureApiScope =
+    import.meta.env.VITE_AZURE_API_SCOPE || `api://${azureClientId}/.default`;
+
+const msalClient = new PublicClientApplication({
+    auth: {
+        clientId: azureClientId,
+        authority: `https://login.microsoftonline.com/${azureTenantId}`,
+        redirectUri: window.location.origin,
+    },
+    cache: {
+        cacheLocation: "localStorage",
+    },
+});
+
 export function Login() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
-    const apiBaseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
-    const azureLoginUrl =
-        import.meta.env.VITE_AZURE_LOGIN_URL || `${apiBaseUrl}/api/Auth/azure-login`;
 
     const navigate = useNavigate();
 
@@ -57,6 +73,44 @@ export function Login() {
             }
         } catch {
             setError("Invalid email or password");
+        }
+    };
+
+    const handleAzureLogin = async () => {
+        setError("");
+
+        try {
+            await msalClient.initialize();
+            const result = await msalClient.loginPopup({
+                scopes: [azureApiScope],
+                prompt: "select_account",
+            });
+
+            const token = result.accessToken;
+            const account = result.account;
+            const roleClaim =
+                account?.idTokenClaims?.roles ||
+                account?.idTokenClaims?.[
+                    "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
+                    ] ||
+                [];
+            const roles = Array.isArray(roleClaim) ? roleClaim : [roleClaim];
+            const role = roles[0] || "Student";
+
+            localStorage.setItem("token", token);
+            localStorage.setItem("role", role);
+            localStorage.setItem("userId", account?.localAccountId || "");
+            localStorage.setItem("fullName", account?.name || "");
+
+            if (role === "Admin") {
+                navigate("/admin-dashboard");
+            } else if (role === "Staff") {
+                navigate("/dashboard");
+            } else {
+                navigate("/student-dashboard");
+            }
+        } catch {
+            setError("Azure ID sign in failed");
         }
     };
 
@@ -121,12 +175,13 @@ export function Login() {
 
                     <div className="login-divider">or</div>
 
-                    <a
+                    <button
                         className="azure-login-btn"
-                        href={azureLoginUrl}
+                        type="button"
+                        onClick={handleAzureLogin}
                     >
                         Sign in with Azure ID
-                    </a>
+                    </button>
                 </div>
             </div>
         </div>
