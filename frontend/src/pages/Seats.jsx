@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useLocation } from "react-router-dom";
 import apiClient from "../api/apiClient";
 import { ProfessorLayout } from "./ProfessorLayout";
@@ -24,19 +24,7 @@ export function Seats() {
     const [message, setMessage] = useState("");
     const [loading, setLoading] = useState(false);
 
-    useEffect(() => {
-        apiClient.get("/api/exam").then(res => setExams(res.data.exams || [])).catch(console.error);
-        apiClient.get("/api/user")
-            .then(res => setStudents(res.data.filter(u => u.role === "Student")))
-            .catch(console.error);
-    }, []);
-
-    useEffect(() => {
-        if (selectedExamId) loadSeatMap();
-        else { setSeatMapData([]); setCapacity(0); setRoomName(""); }
-    }, [selectedExamId]);
-
-    const loadSeatMap = async () => {
+    const loadSeatMap = useCallback(async () => {
         setLoading(true);
         setMessage("");
         try {
@@ -49,7 +37,18 @@ export function Seats() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [selectedExamId]);
+
+    useEffect(() => {
+        apiClient.get("/api/exam").then(res => setExams(res.data.exams || [])).catch(console.error);
+        apiClient.get("/api/user")
+            .then(res => setStudents(res.data.filter(u => u.role === "Student")))
+            .catch(console.error);
+    }, []);
+
+    useEffect(() => {
+        if (selectedExamId) Promise.resolve().then(loadSeatMap);
+    }, [selectedExamId, loadSeatMap]);
 
     const handleSeatClick = async (seat) => {
         if (seat.studentId) {
@@ -120,7 +119,14 @@ export function Seats() {
                 <div style={{ display: "flex", gap: "12px", alignItems: "center", flexWrap: "wrap" }}>
                     <select className="login-input"
                             value={selectedExamId}
-                            onChange={e => { setSelectedSeat(null); setMessage(""); setSelectedExamId(e.target.value); }}
+                            onChange={e => {
+                                setSelectedSeat(null);
+                                setMessage("");
+                                setSeatMapData([]);
+                                setCapacity(0);
+                                setRoomName("");
+                                setSelectedExamId(e.target.value);
+                            }}
                             style={{ flex: "1", minWidth: "200px", height: "40px" }}>
                         <option value="">— Select an exam —</option>
                         {exams.map(e => (

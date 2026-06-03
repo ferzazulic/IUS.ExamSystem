@@ -33,7 +33,7 @@ export function NotificationsManage() {
         try {
             await apiClient.delete(`/api/notification/${id}`);
             setNotifications(prev => prev.filter(n => n.id !== id));
-        } catch (err) {
+        } catch {
             setError("Failed to delete notification");
         }
     };

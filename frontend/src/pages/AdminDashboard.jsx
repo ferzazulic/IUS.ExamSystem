@@ -23,11 +23,6 @@ export function AdminDashboard() {
     const [creatingRoom, setCreatingRoom] = useState(false);
     const [editRoom, setEditRoom] = useState(null);
 
-    useEffect(() => {
-        if (!localStorage.getItem("token")) navigate("/login");
-        fetchAll();
-    }, []);
-
     const fetchAll = async () => {
         try {
             const [usersRes, examsRes, roomsRes] = await Promise.all([
@@ -43,6 +38,11 @@ export function AdminDashboard() {
             console.error(err);
         }
     };
+
+    useEffect(() => {
+        if (!localStorage.getItem("token")) navigate("/login");
+        Promise.resolve().then(fetchAll);
+    }, [navigate]);
 
     // ── USER FUNCTIONS ──
     const createUser = async () => {

@@ -8,7 +8,7 @@ export function Exams() {
 
     const [rooms, setRooms] = useState([]);
     const [exams, setExams] = useState([]);
-    const [courses, setCourses] = useState([]);
+    const [courses] = useState(() => JSON.parse(localStorage.getItem("courses")) || []);
     const [error, setError] = useState("");
     const [selectedCourse, setSelectedCourse] = useState("");
     const [selectedRoom, setSelectedRoom] = useState("");
@@ -17,8 +17,6 @@ export function Exams() {
     const [endTime, setEndTime] = useState("");
 
     useEffect(() => {
-        const storedCourses = JSON.parse(localStorage.getItem("courses")) || [];
-        setCourses(storedCourses);
         apiClient.get("/api/room").then(res => setRooms(res.data)).catch(console.error);
         apiClient.get("/api/exam").then(res => setExams(res.data.exams || [])).catch(console.error);
     }, []);
@@ -50,7 +48,7 @@ export function Exams() {
             setStartDate("");
             setStartTime("");
             setEndTime("");
-        } catch (err) {
+        } catch {
             setError("Failed to create exam");
         }
     };

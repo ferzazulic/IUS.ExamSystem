@@ -76,7 +76,7 @@ export function Rooms() {
     }, []);
 
     useEffect(() => {
-        if (!selectedExamId) { setSeatData(null); return; }
+        if (!selectedExamId) return;
         apiClient.get(`/api/exam/${selectedExamId}/seat-map`)
             .then(res => setSeatData(res.data))
             .catch(console.error);
@@ -159,7 +159,10 @@ export function Rooms() {
             }}>
                 <span style={{ fontWeight: "600", fontSize: "0.85rem", color: "#555", whiteSpace: "nowrap" }}>Show seats for exam:</span>
                 <select className="login-input" value={selectedExamId}
-                        onChange={e => setSelectedExamId(e.target.value)}
+                        onChange={e => {
+                            setSeatData(null);
+                            setSelectedExamId(e.target.value);
+                        }}
                         style={{ flex: "1", minWidth: "200px", height: "38px" }}>
                     <option value="">— Empty layout —</option>
                     {exams.map(e => (

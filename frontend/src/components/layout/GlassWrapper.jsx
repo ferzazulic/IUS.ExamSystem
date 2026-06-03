@@ -1,8 +1,8 @@
 import React, {useState} from "react";
 
 export function GlassWrapper({children}) {
-    const [accentColor, setAccentColor] = useState('#003366');
-    const [glassBlur, setGlassBlur] = useState(20);
+    const [accentColor] = useState('#003366');
+    const [glassBlur] = useState(20);
     return (
         <div className="canvas" style={{'--accent': accentColor, '--blur': `${glassBlur}px`}}>
             {/*<div className="orb orb-1"></div>*/}

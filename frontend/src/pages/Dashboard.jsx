@@ -7,14 +7,13 @@ export function Dashboard() {
     const navigate = useNavigate();
     const [examCount, setExamCount] = useState(0);
     const [roomCount, setRoomCount] = useState(0);
-    const [courses, setCourses] = useState([]);
+    const [courses] = useState(() => JSON.parse(localStorage.getItem("courses")) || []);
 
     useEffect(() => {
         if (!localStorage.getItem("token")) navigate("/login");
         apiClient.get("/api/exam").then(res => setExamCount(res.data.exams?.length || 0)).catch(console.error);
         apiClient.get("/api/room").then(res => setRoomCount(res.data?.length || 0)).catch(console.error);
-        setCourses(JSON.parse(localStorage.getItem("courses")) || []);
-    }, []);
+    }, [navigate]);
 
     return (
         <ProfessorLayout active="dashboard">
