@@ -5,7 +5,9 @@ using IUS.ExamSystem.Infrastructure.Data;
 using IUS.ExamSystem.Infrastructure.Seeder;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Identity.Web;
 using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using System.Text.Json.Serialization;
 
@@ -25,8 +27,37 @@ builder.Services.AddScoped<IConflictDetectionService, ConflictDetectionService>(
 builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<IRoomService, RoomService>();
 
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
+builder.Services.AddAuthentication(options =>
+    {
+        options.DefaultScheme = "SmartBearer";
+        options.DefaultChallengeScheme = "SmartBearer";
+    })
+    .AddPolicyScheme("SmartBearer", "Local JWT or Azure AD", options =>
+    {
+        options.ForwardDefaultSelector = context =>
+        {
+            var authorization = context.Request.Headers.Authorization.ToString();
+            if (!authorization.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+            {
+                return "LocalJwt";
+            }
+
+            try
+            {
+                var token = authorization["Bearer ".Length..].Trim();
+                var issuer = new JwtSecurityTokenHandler().ReadJwtToken(token).Issuer;
+
+                return issuer.StartsWith(builder.Configuration["AzureAd:Instance"]!, StringComparison.OrdinalIgnoreCase)
+                    ? "AzureAd"
+                    : "LocalJwt";
+            }
+            catch
+            {
+                return "LocalJwt";
+            }
+        };
+    })
+    .AddJwtBearer("LocalJwt", options =>
     {
         options.TokenValidationParameters = new TokenValidationParameters
         {
@@ -40,7 +71,10 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!)
             )
         };
-    });
+    })
+    .AddMicrosoftIdentityWebApi(
+        builder.Configuration.GetSection("AzureAd"),
+        jwtBearerScheme: "AzureAd");
 
 builder.Services.AddAuthorization();
 builder.Services.AddCors(options =>
