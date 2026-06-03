@@ -8,6 +8,9 @@ export function Login() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
+    const apiBaseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
+    const azureLoginUrl =
+        import.meta.env.VITE_AZURE_LOGIN_URL || `${apiBaseUrl}/api/Auth/azure-login`;
 
     const navigate = useNavigate();
 
@@ -115,6 +118,15 @@ export function Login() {
                     >
                         Log in
                     </button>
+
+                    <div className="login-divider">or</div>
+
+                    <a
+                        className="azure-login-btn"
+                        href={azureLoginUrl}
+                    >
+                        Sign in with Azure ID
+                    </a>
                 </div>
             </div>
         </div>

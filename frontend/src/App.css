@@ -926,9 +926,44 @@ input:checked + .slider:before { transform: translateX(24px); }
 }
 
 .login-divider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #94a3b8;
+    font-size: 0.75rem;
+    font-weight: 700;
+    margin: 2px 0;
+}
+
+.login-divider::before,
+.login-divider::after {
+    content: "";
     height: 1px;
+    flex: 1;
     background: #eee;
-    margin: 10px 0;
+}
+
+.azure-login-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+    padding: 0 12px;
+    border-radius: 14px;
+    border: 1px solid #d8e0ea;
+    background: white;
+    color: #0f172a;
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 800;
+    transition: all 0.25s ease;
+}
+
+.azure-login-btn:hover {
+    border-color: #0078d4;
+    color: #0078d4;
+    transform: translateY(-2px);
+    box-shadow: 0 12px 25px rgba(0,120,212,0.12);
 }
 
 .register-btn {
